@@ -120,7 +120,7 @@ macro_rules! impl_mul_div_for_value_by_unit {
             N: UnitInv,
             J: UnitInv,
         {
-            type Output = $crate::Quantity<$crate::ops::InvOut<Unit<L, M, Ti, I, Te, N, J>>, $type>;
+            type Output = $crate::Quantity<$crate::ops::Reciprocal<Unit<L, M, Ti, I, Te, N, J>>, $type>;
 
             fn div(self, _: Unit<L, M, Ti, I, Te, N, J>) -> Self::Output {
                 Self::Output::new(self)

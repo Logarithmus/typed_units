@@ -130,22 +130,18 @@ pub(crate) use impl_binary_op_for_type_array;
 /// Generate aliases for unary operators' output type
 /// E. g. `type NegOut<L> = <L as Neg>::Output`
 macro_rules! unary_ops_out_aliases {
-    ($($op:ident),+) => {
-        paste::paste! {
-            $(pub type [<$op Out>]<L> = <L as $op>::Output;)+
-        }
+    ($($op:ident -> $out:ident),+) => {
+        $(pub type $out<L> = <L as $op>::Output;)+
     };
 }
 
 pub(crate) use unary_ops_out_aliases;
 
 /// Generate aliases for binary operators' output type
-/// E. g. `type AddOut<L, R> = <L as Add<R>>::Output`
+/// E. g. `type Sum<L, R> = <L as Add<R>>::Output`
 macro_rules! binary_ops_out_aliases {
-    ($($op:ident),+) => {
-        paste::paste! {
-            $(pub type [<$op Out>]<L, R> = <L as $op<R>>::Output;)+
-        }
+    ($($op:ident -> $out:ident),+) => {
+        $(pub type $out<L, R> = <L as $op<R>>::Output;)+
     };
 }
 
@@ -153,13 +149,13 @@ pub(crate) use binary_ops_out_aliases;
 
 macro_rules! trait_alias {
     // single alias
-    ($first_trait:ident, $($trait:ident),* -> $alias:ident) => {
+    (($first_trait:ident, $($trait:ident),*) -> $alias:ident) => {
         pub trait $alias: $first_trait $(+ $trait),* {}
         impl<T: $first_trait $(+ $trait),*> $alias for T {}
     };
 
     // multiple aliases
-    ($($first_trait:ident, $($trait:ident),* -> $alias:ident;),+) => {
+    ($(($first_trait:ident, $($trait:ident),*) -> $alias:ident;),+) => {
         $(trait_alias!($first_trait:ident, $($trait:ident),* -> $alias:ident)),+
     }
 }

@@ -1,6 +1,6 @@
 use crate::{
     name::NameBuf,
-    ops::{AddOut, CmpOut, SubOut},
+    ops::{Sum, CmpOut, Diff},
     util::{binary_ops_out_aliases, concat_const_str, trait_alias, ConstStr},
     Name, Prefix, Root,
 };
@@ -42,9 +42,14 @@ pub trait UnitDiv<Rhs = Self> {
     type Output;
 }
 
-binary_ops_out_aliases!(UnitAdd, UnitSub, UnitMul, UnitDiv);
+binary_ops_out_aliases! {
+    UnitAdd -> UnitSum,
+    UnitSub -> UnitDiff,
+    UnitMul -> UnitProduct,
+    UnitDiv -> UnitQuotient
+}
 
-trait_alias!(Unsigned, NonZero -> Positive);
+trait_alias!((Unsigned, NonZero) -> Positive);
 
 /// Implements operators (Mul & Div) for (U, E),
 /// where U -- base unit with or without prefix, E -- exponent
@@ -72,35 +77,35 @@ macro_rules! impl_ops_for_base_unit_0 {
     };
 }
 
-impl_ops_for_base_unit_0!(UnitMul: Add: AddOut, UnitDiv: Sub: SubOut);
+impl_ops_for_base_unit_0!(UnitMul: Add: Sum, UnitDiv: Sub: Diff);
 
 impl<U: BaseUnit, El: Add<Er> + Positive, Er: Positive> UnitMul<(U, PInt<Er>)> for (U, PInt<El>)
 where
-    AddOut<El, Er>: Positive,
+    Sum<El, Er>: Positive,
 {
-    type Output = (U, PInt<AddOut<El, Er>>);
+    type Output = (U, PInt<Sum<El, Er>>);
 }
 
 impl<U: BaseUnit, El: Sub<Er> + Positive, Er: Positive> UnitDiv<(U, PInt<Er>)> for (U, PInt<El>)
 where
-    SubOut<El, Er>: Positive,
+    Diff<El, Er>: Positive,
     El: Cmp<Er> + PrivateIntegerAdd<CmpOut<El, Er>, Er>,
 {
-    type Output = (U, SubOut<PInt<El>, PInt<Er>>);
+    type Output = (U, Diff<PInt<El>, PInt<Er>>);
 }
 
 impl<U: BaseUnit, El: Add<Er> + Positive, Er> UnitMul<(U, PInt<Er>)> for (U, NInt<El>)
 where
     Er: Positive + Cmp<El> + PrivateIntegerAdd<CmpOut<Er, El>, El>,
 {
-    type Output = (U, AddOut<NInt<El>, PInt<Er>>);
+    type Output = (U, Sum<NInt<El>, PInt<Er>>);
 }
 
 impl<U: BaseUnit, El: Add<Er> + Positive, Er: Positive> UnitDiv<(U, PInt<Er>)> for (U, NInt<El>)
 where
-    AddOut<El, Er>: Positive,
+    Sum<El, Er>: Positive,
 {
-    type Output = (U, NInt<AddOut<El, Er>>);
+    type Output = (U, NInt<Sum<El, Er>>);
 }
 
 impl<U, El, Er> UnitMul<(U, NInt<Er>)> for (U, PInt<El>)
@@ -109,28 +114,28 @@ where
     El: Add<Er> + Positive + Cmp<Er> + PrivateIntegerAdd<CmpOut<El, Er>, Er>,
     Er: Positive,
 {
-    type Output = (U, AddOut<PInt<El>, NInt<Er>>);
+    type Output = (U, Sum<PInt<El>, NInt<Er>>);
 }
 
 impl<U: BaseUnit, El: Add<Er> + Positive, Er: Positive> UnitDiv<(U, NInt<Er>)> for (U, PInt<El>)
 where
-    AddOut<El, Er>: Positive,
+    Sum<El, Er>: Positive,
 {
-    type Output = (U, PInt<AddOut<El, Er>>);
+    type Output = (U, PInt<Sum<El, Er>>);
 }
 
 impl<U: BaseUnit, El: Add<Er> + Positive, Er: Positive> UnitMul<(U, NInt<Er>)> for (U, NInt<El>)
 where
-    AddOut<El, Er>: Positive,
+    Sum<El, Er>: Positive,
 {
-    type Output = (U, AddOut<NInt<El>, NInt<Er>>);
+    type Output = (U, Sum<NInt<El>, NInt<Er>>);
 }
 
 impl<U: BaseUnit, El: Add<Er> + Positive, Er: Positive> UnitDiv<(U, NInt<Er>)> for (U, NInt<El>)
 where
-    AddOut<El, Er>: Positive,
+    Sum<El, Er>: Positive,
 {
-    type Output = (U, NInt<AddOut<El, Er>>);
+    type Output = (U, NInt<Sum<El, Er>>);
 }
 
 /// Inversion (reciprocal) operator for (Unit, Exponent)

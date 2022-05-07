@@ -1,4 +1,4 @@
-use crate::ops::{DivOut, MulOut};
+use crate::ops::{Quotient, Product};
 use core::{
     marker::PhantomData,
     ops::{Add, Div, Mul, Sub},
@@ -30,7 +30,7 @@ impl<U, V> Quantity<U, V> {
 }
 
 impl<Ul: Mul<Ur>, Ur, V: Mul<Output = V>> Mul<Quantity<Ur, V>> for Quantity<Ul, V> {
-    type Output = Quantity<MulOut<Ul, Ur>, V>;
+    type Output = Quantity<Product<Ul, Ur>, V>;
 
     fn mul(self, rhs: Quantity<Ur, V>) -> Self::Output {
         Self::Output::new(self.value * rhs.value)
@@ -38,7 +38,7 @@ impl<Ul: Mul<Ur>, Ur, V: Mul<Output = V>> Mul<Quantity<Ur, V>> for Quantity<Ul, 
 }
 
 impl<Ul: Div<Ur>, Ur, V: Div<Output = V>> Div<Quantity<Ur, V>> for Quantity<Ul, V> {
-    type Output = Quantity<DivOut<Ul, Ur>, V>;
+    type Output = Quantity<Quotient<Ul, Ur>, V>;
 
     fn div(self, rhs: Quantity<Ur, V>) -> Self::Output {
         Self::Output::new(self.value / rhs.value)
