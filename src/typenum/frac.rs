@@ -1,4 +1,5 @@
-use crate::ops::{Sum, Quotient, Product};
+use crate::ops::{Product, Quotient, Sum};
+use crate::util::binary_ops_out_aliases;
 use core::ops::{Add, Div, Mul};
 use typenum::{Abs, AbsVal, Gcd, Gcf};
 
@@ -6,7 +7,9 @@ pub trait LcmOp<Rhs>: Gcd<Rhs> {
     type Output;
 }
 
-pub type Lcm<L, R> = <L as LcmOp<R>>::Output;
+binary_ops_out_aliases! {
+    LcmOp -> Lcm
+}
 
 impl<L: Gcd<R> + Mul<R>, R> LcmOp<R> for L
 where

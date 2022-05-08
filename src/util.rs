@@ -63,11 +63,6 @@ macro_rules! count_idents {
 
 pub(crate) use count_idents;
 
-#[test]
-fn test_count_idents() {
-    assert_eq!(count_idents!(A, B, C, D), 4);
-}
-
 macro_rules! type_array {
     ($name:ident<$($param:ident),+>) => {
         pub struct $name<$($param = ()),+>(::core::marker::PhantomData<($($param),+)>);
@@ -87,13 +82,6 @@ macro_rules! type_array {
 }
 
 pub(crate) use type_array;
-
-#[test]
-fn type_array_len() {
-    type_array!(Test<A, B, C, D, E, F>);
-    const len: usize = <Test>::len();
-    assert_eq!(len, 6);
-}
 
 macro_rules! impl_unary_op_for_type_array {
     ($name:ident<$($param:ident),+>, $op:ident, $op_bound:ident) => {
@@ -161,3 +149,18 @@ macro_rules! trait_alias {
 }
 
 pub(crate) use trait_alias;
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test_count_idents() {
+        assert_eq!(count_idents!(A, B, C, D), 4);
+    }
+
+    #[test]
+    fn type_array_len() {
+        type_array!(Test<A, B, C, D, E, F>);
+        const len: usize = <Test>::len();
+        assert_eq!(len, 6);
+    }
+}

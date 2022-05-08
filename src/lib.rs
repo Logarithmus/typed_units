@@ -1,4 +1,3 @@
-pub mod frac;
 pub mod iec_80000;
 pub mod isq;
 pub mod kind;
@@ -7,6 +6,7 @@ pub mod ops;
 pub mod prefix;
 pub mod quantity;
 pub mod root;
+pub mod typenum;
 pub mod unit;
 pub mod util;
 
