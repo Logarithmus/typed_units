@@ -1,9 +1,8 @@
 use crate::{
-    unit::{UnitDiv, UnitInv, UnitMul},
+    ops::{Div as UnitDiv, Inv as UnitInv, Mul as UnitMul},
     util::{impl_binary_op_for_type_array, impl_unary_op_for_type_array, type_array},
 };
 use core::ops::{Div, Mul};
-use num_traits::Inv;
 
 /// Metric prefixes
 pub mod prefix {
@@ -53,36 +52,75 @@ pub mod root {
 type_array!(Unit<L, M, Ti, I, Te, N, J>);
 impl_binary_op_for_type_array!(Unit<L, M, Ti, I, Te, N, J>, Mul, UnitMul);
 impl_binary_op_for_type_array!(Unit<L, M, Ti, I, Te, N, J>, Div, UnitDiv);
-impl_unary_op_for_type_array!(Unit<L, M, Ti, I, Te, N, J>, Inv, UnitInv);
+impl_unary_op_for_type_array!(Unit<L, M, Ti, I, Te, N, J>, UnitInv, UnitInv);
 
 pub mod unit {
-    use super::prefix::k;
-    use super::root::{cd, g, m, mol, s, A, K};
-    use super::Unit;
-    use typenum::{P1, Z0};
+    use super::{
+        prefix::k,
+        root::{cd, g, m, mol, s, A, K},
+        Unit,
+    };
+    use crate::{
+        ops::{Downcast, Upcast, Upcasted},
+        unit::SimpleUnit,
+    };
+    use std::{
+        marker::PhantomData,
+        ops::{Div, Mul},
+    };
+    use typenum::{Prod, Quot, N1, P1, P2, Z0};
 
-    pub type Dimensionless =
-        Unit<(m, Z0), ((k, g), Z0), (s, Z0), (A, Z0), (K, Z0), (mol, Z0), (cd, Z0)>;
-    pub type Meter = Unit<(m, P1), ((k, g), Z0), (s, Z0), (A, Z0), (K, Z0), (mol, Z0), (cd, Z0)>;
-    pub type Kilogram = Unit<(m, Z0), ((k, g), P1), (s, Z0), (A, Z0), (K, Z0), (mol, Z0), (cd, Z0)>;
-    pub type Second = Unit<(m, Z0), ((k, g), Z0), (s, P1), (A, Z0), (K, Z0), (mol, Z0), (cd, Z0)>;
-    pub type Ampere = Unit<(m, Z0), ((k, g), Z0), (s, Z0), (A, P1), (K, Z0), (mol, Z0), (cd, Z0)>;
-    pub type Kelvin = Unit<(m, Z0), ((k, g), Z0), (s, Z0), (A, Z0), (K, P1), (mol, Z0), (cd, Z0)>;
-    pub type Mole = Unit<(m, Z0), ((k, g), Z0), (s, Z0), (A, Z0), (K, Z0), (mol, P1), (cd, Z0)>;
-    pub type Candela = Unit<(m, Z0), ((k, g), Z0), (s, Z0), (A, Z0), (K, Z0), (mol, Z0), (cd, P1)>;
+    macro_rules! impl_unit_upcast_downcast {
+        ($(($m:ident, $kg:ident, $s:ident, $A:ident, $K:ident, $mol:ident, $cd:ident) -> $alias:ident,)+) => {
+            $(pub struct $alias;
+
+            impl $alias {
+                #[must_use]
+                pub const fn new() -> Self {
+                    Self
+                }
+            }
+
+            impl Upcast for $alias {
+                type Output =
+                    Unit<(m, $m), ((k, g), $kg), (s, $s), (A, $A), (K, $K), (mol, $mol), (cd, $cd)>;
+            }
+
+            impl Downcast
+                for Unit<(m, $m), ((k, g), $kg), (s, $s), (A, $A), (K, $K), (mol, $mol), (cd, $cd)>
+            {
+                type Output = $alias;
+            })+
+        };
+    }
+
+    impl_unit_upcast_downcast! {
+        (Z0, Z0, Z0, Z0, Z0, Z0, Z0) -> Dimensionless,
+        (P1, Z0, Z0, Z0, Z0, Z0, Z0) -> Meter,
+        (Z0, P1, Z0, Z0, Z0, Z0, Z0) -> Kilogram,
+        (Z0, Z0, P1, Z0, Z0, Z0, Z0) -> Second,
+        (Z0, Z0, Z0, P1, Z0, Z0, Z0) -> Ampere,
+        (Z0, Z0, Z0, Z0, P1, Z0, Z0) -> Kelvin,
+        (Z0, Z0, Z0, Z0, Z0, P1, Z0) -> Mole,
+        (Z0, Z0, Z0, Z0, Z0, Z0, P1) -> Candela,
+        (P1, Z0, N1, Z0, Z0, Z0, Z0) -> MeterPerSecond,
+        (P2, Z0, Z0, Z0, Z0, Z0, Z0) -> MeterSquared,
+    }
 }
 
 #[allow(non_upper_case_globals)]
 pub mod consts {
+    use crate::unit::SimpleUnit;
+
     use super::unit::*;
 
-    pub const m: Meter = Meter::new();
-    pub const kg: Kilogram = Kilogram::new();
-    pub const s: Second = Second::new();
-    pub const A: Ampere = Ampere::new();
-    pub const K: Kelvin = Kelvin::new();
-    pub const mol: Mole = Mole::new();
-    pub const cd: Candela = Candela::new();
+    pub const m: SimpleUnit<Meter> = SimpleUnit::<Meter>::new();
+    pub const kg: SimpleUnit<Kilogram> = SimpleUnit::<Kilogram>::new();
+    pub const s: SimpleUnit<Second> = SimpleUnit::<Second>::new();
+    pub const A: SimpleUnit<Ampere> = SimpleUnit::<Ampere>::new();
+    pub const K: SimpleUnit<Kelvin> = SimpleUnit::<Kelvin>::new();
+    pub const mol: SimpleUnit<Mole> = SimpleUnit::<Mole>::new();
+    pub const cd: SimpleUnit<Candela> = SimpleUnit::<Candela>::new();
 }
 
 #[test]
@@ -120,7 +158,8 @@ macro_rules! impl_mul_div_for_value_by_unit {
             N: UnitInv,
             J: UnitInv,
         {
-            type Output = $crate::Quantity<$crate::ops::Reciprocal<Unit<L, M, Ti, I, Te, N, J>>, $type>;
+            type Output =
+                $crate::Quantity<$crate::ops::Inverse<Unit<L, M, Ti, I, Te, N, J>>, $type>;
 
             fn div(self, _: Unit<L, M, Ti, I, Te, N, J>) -> Self::Output {
                 Self::Output::new(self)

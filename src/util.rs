@@ -84,15 +84,9 @@ macro_rules! type_array {
 pub(crate) use type_array;
 
 macro_rules! impl_unary_op_for_type_array {
-    ($name:ident<$($param:ident),+>, $op:ident, $op_bound:ident) => {
-        impl<$($param: $op_bound,)+> $op for $name<$($param),+> {
-            type Output = $name<$(<$param as $op_bound>::Output,)+>;
-
-            paste::paste! {
-                fn [<$op:lower>](self) -> Self::Output {
-                    Self::Output::new()
-                }
-            }
+    ($name:ident<$($type_param:ident),+>, $op:ident, $op_bound:ident) => {
+        impl<$($type_param: $op_bound,)+> $op for $name<$($type_param),+> {
+            type Output = $name<$(<$type_param as $op_bound>::Output,)+>;
         }
     };
 }
@@ -118,7 +112,7 @@ pub(crate) use impl_binary_op_for_type_array;
 /// Generate aliases for unary operators' output type
 /// E. g. `type NegOut<L> = <L as Neg>::Output`
 macro_rules! unary_ops_out_aliases {
-    ($($op:ident -> $out:ident),+) => {
+    ($($op:ident -> $out:ident,)+) => {
         $(pub type $out<L> = <L as $op>::Output;)+
     };
 }
@@ -128,7 +122,7 @@ pub(crate) use unary_ops_out_aliases;
 /// Generate aliases for binary operators' output type
 /// E. g. `type Sum<L, R> = <L as Add<R>>::Output`
 macro_rules! binary_ops_out_aliases {
-    ($($op:ident -> $out:ident),+) => {
+    ($($op:ident -> $out:ident,)+) => {
         $(pub type $out<L, R> = <L as $op<R>>::Output;)+
     };
 }
@@ -160,7 +154,7 @@ mod tests {
     #[test]
     fn type_array_len() {
         type_array!(Test<A, B, C, D, E, F>);
-        const len: usize = <Test>::len();
-        assert_eq!(len, 6);
+        const LEN: usize = <Test>::len();
+        assert_eq!(LEN, 6);
     }
 }

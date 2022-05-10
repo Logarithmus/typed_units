@@ -1,42 +1,68 @@
-use crate::ops::{Product, Quotient, Sum};
-use crate::util::binary_ops_out_aliases;
-use core::ops::{Add, Div, Mul};
-use typenum::{Abs, AbsVal, Gcd, Gcf};
+//! This module should be upstreamed to <https://lib.rs/typenum>
 
-pub trait LcmOp<Rhs>: Gcd<Rhs> {
+use crate::{
+    typenum::{Lcm, LcmOp},
+    util::binary_ops_out_aliases,
+};
+use core::ops::{Add, Div, Mul};
+use typenum::{Prod, Quot, Sum};
+
+/// Operator to add 2 fractions of type-level numbers
+///
+/// We can't use `core::ops::Add` because both `core::ops::Add` & `(N, D)` are foreign to our crate.
+///
+/// We could wrap `(N, D)` into newtype struct like `struct Frac(N, D)`, but it would make
+/// `uom-ng` compile errors more verbose.
+pub trait FracAdd<Rhs> {
     type Output;
 }
 
 binary_ops_out_aliases! {
-    LcmOp -> Lcm
+    FracAdd -> FracSum,
 }
 
-impl<L: Gcd<R> + Mul<R>, R> LcmOp<R> for L
-where
-    Product<L, R>: Abs,
-    AbsVal<Product<L, R>>: Div<Gcf<L, R>>,
-{
-    type Output = Quotient<AbsVal<Product<L, R>>, Gcf<L, R>>;
-}
-
-pub trait FracAddOp<Fr> {
-    type Lcm;
-    type NOut;
-    type Output;
-}
-
-impl<Nl, Nr, Dl: Mul<Dr> + LcmOp<Dr>, Dr> FracAddOp<(Nr, Dr)> for (Nl, Dl)
+/// **TLDR;** `Sum<(Nl, Dl), (Nr, Dr)> == (Nl / Dl) + (Nr / Dr)`
+///
+/// * `N` -- numerator
+/// * `D` -- denominator
+/// * `l` -- left-hand side
+/// * `r` -- right-hand-side
+impl<Nl, Nr, Dl: Mul<Dr> + LcmOp<Dr>, Dr> FracAdd<(Nr, Dr)> for (Nl, Dl)
 where
     Lcm<Dl, Dr>: Div<Dl> + Div<Dr>,
-    Nl: Mul<Quotient<Lcm<Dl, Dr>, Dl>>,
-    Nr: Mul<Quotient<Lcm<Dl, Dr>, Dr>>,
-    Product<Nl, Quotient<Lcm<Dl, Dr>, Dl>>: Add<Product<Nr, Quotient<Lcm<Dl, Dr>, Dr>>>,
-    Sum<Product<Nl, Quotient<Lcm<Dl, Dr>, Dl>>, Product<Nr, Quotient<Lcm<Dl, Dr>, Dr>>>:
-        Div<Lcm<Dl, Dr>>,
+    Nl: Mul<Quot<Lcm<Dl, Dr>, Dl>>,
+    Nr: Mul<Quot<Lcm<Dl, Dr>, Dr>>,
+    Prod<Nl, Quot<Lcm<Dl, Dr>, Dl>>: Add<Prod<Nr, Quot<Lcm<Dl, Dr>, Dr>>>,
+    Sum<Prod<Nl, Quot<Lcm<Dl, Dr>, Dl>>, Prod<Nr, Quot<Lcm<Dl, Dr>, Dr>>>: Div<Lcm<Dl, Dr>>,
 {
-    type Lcm = Lcm<Dl, Dr>;
-    type NOut = Sum<Product<Nl, Quotient<Self::Lcm, Dl>>, Product<Nr, Quotient<Self::Lcm, Dr>>>;
-    type Output = Quotient<Self::NOut, Self::Lcm>;
+    /// Sum of 2 fractions
+    type Output = <(Nl, Dl) as hidden::FracAddImpl<(Nr, Dr)>>::Output;
 }
 
-type FracAdd<L, R> = <L as FracAddOp<R>>::Output;
+mod hidden {
+    use crate::typenum::{Lcm, LcmOp};
+    use core::ops::{Add, Div, Mul};
+    use typenum::{Prod, Quot, Sum};
+
+    pub trait FracAddImpl<Rhs> {
+        /// Least common denominator
+        type Lcd;
+        /// Numerator of the sum of 2 fractions
+        type NOut;
+        /// Sum of 2 fractions
+        type Output;
+    }
+
+    impl<Nl, Nr, Dl: Mul<Dr> + LcmOp<Dr>, Dr> FracAddImpl<(Nr, Dr)> for (Nl, Dl)
+    where
+        Lcm<Dl, Dr>: Div<Dl> + Div<Dr>,
+        Nl: Mul<Quot<Lcm<Dl, Dr>, Dl>>,
+        Nr: Mul<Quot<Lcm<Dl, Dr>, Dr>>,
+        Prod<Nl, Quot<Lcm<Dl, Dr>, Dl>>: Add<Prod<Nr, Quot<Lcm<Dl, Dr>, Dr>>>,
+        Sum<Prod<Nl, Quot<Lcm<Dl, Dr>, Dl>>, Prod<Nr, Quot<Lcm<Dl, Dr>, Dr>>>: Div<Lcm<Dl, Dr>>,
+    {
+        type Lcd = Lcm<Dl, Dr>;
+        type NOut = Sum<Prod<Nl, Quot<Self::Lcd, Dl>>, Prod<Nr, Quot<Self::Lcd, Dr>>>;
+        type Output = Quot<Self::NOut, Self::Lcd>;
+    }
+}

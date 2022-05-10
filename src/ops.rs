@@ -1,12 +1,53 @@
+use typenum::{Integer, P1};
+
 use crate::util::{binary_ops_out_aliases, unary_ops_out_aliases};
-use core::ops::{Add, Div, Mul, Sub};
-use num_traits::Inv;
-use typenum::Cmp;
+
+/// Downcast units to shorten compile errors
+pub trait Downcast {
+    type Output;
+}
+
+/// Opposite of `Downcast`
+pub trait Upcast {
+    type Output;
+}
 
 unary_ops_out_aliases! {
-    Inv -> Reciprocal
+    Upcast -> Upcasted,
+    Downcast -> Downcasted,
+    Inv -> Inverse,
+}
+
+macro_rules! reexport_core_ops {
+    ($(($op:ident, $sign:literal),)+) => {
+        $(#[doc = concat!(
+            "`", $sign, "` operator, used when `std::ops::", stringify!($op),
+            "` can't be used due to orphan rules"
+        )]
+        pub trait $op<Rhs> {
+            type Output;
+        })+
+    };
+}
+
+reexport_core_ops! {
+    (Add, "+"),
+    (Sub, "-"),
+    (Mul, "*"),
+    (Div, "/"),
+}
+
+pub trait Inv {
+    type Output;
+}
+
+pub trait One {
+    const ONE: Self;
 }
 
 binary_ops_out_aliases! {
-    Add -> Sum, Sub -> Diff, Mul -> Product, Div -> Quotient, Cmp -> CmpOut
+    Add -> Sum,
+    Sub -> Diff,
+    Mul -> Prod,
+    Div -> Quot,
 }

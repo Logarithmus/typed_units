@@ -8,6 +8,5 @@ name = "uom_ng"
 
 [dependencies]
 derivative = "2.2.0"
-num-traits = { version = "0.2.14", default-features = false }
 paste = "1.0.6"
 typenum = { version = "1.15.0", default-features = false }
