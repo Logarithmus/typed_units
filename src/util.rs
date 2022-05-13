@@ -159,7 +159,7 @@ pub(crate) use trait_alias;
 #[cfg(test)]
 mod tests {
     #[test]
-    fn test_count_idents() {
+    fn count_idents() {
         assert_eq!(count_idents!(A, B, C, D), 4);
     }
 
