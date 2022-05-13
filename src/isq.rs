@@ -35,7 +35,7 @@ pub mod prefix {
 
 /// Base units without prefix
 pub mod root {
-    use crate::root::roots;
+    use crate::{kind, root::roots, Prefix, Root};
 
     #[rustfmt::skip]
     roots! {
@@ -47,6 +47,22 @@ pub mod root {
         (mole,    "mole",    mol, "mol"),
         (candela, "candela", cd,  "cd")
     }
+
+    impl kind::Length for meter {}
+    impl kind::Mass for gram {}
+    impl kind::Time for second {}
+    impl kind::Current for ampere {}
+    impl kind::Temperature for kelvin {}
+    impl kind::AmountOfSubstance for mole {}
+    impl kind::LuminousIntensity for candela {}
+
+    impl<P: Prefix, R: Root + kind::Length> kind::Length for (P, R) {}
+    impl<P: Prefix, R: Root + kind::Mass> kind::Mass for (P, R) {}
+    impl<P: Prefix, R: Root + kind::Time> kind::Time for (P, R) {}
+    impl<P: Prefix, R: Root + kind::Current> kind::Current for (P, R) {}
+    impl<P: Prefix, R: Root + kind::Temperature> kind::Temperature for (P, R) {}
+    impl<P: Prefix, R: Root + kind::AmountOfSubstance> kind::AmountOfSubstance for (P, R) {}
+    impl<P: Prefix, R: Root + kind::LuminousIntensity> kind::LuminousIntensity for (P, R) {}
 }
 
 type_array!(Unit<L, M, Ti, I, Te, N, J>);
@@ -60,18 +76,22 @@ pub mod unit {
         root::{cd, g, m, mol, s, A, K},
         Unit,
     };
-    use crate::{
-        ops::{Downcast, Upcast, Upcasted},
-        unit::SimpleUnit,
-    };
-    use std::{
-        marker::PhantomData,
-        ops::{Div, Mul},
-    };
-    use typenum::{Prod, Quot, N1, P1, P2, Z0};
+    use typenum::{N1, P1, P2, Z0};
 
-    macro_rules! impl_unit_upcast_downcast {
+    macro_rules! unit_aliases {
         ($(($m:ident, $kg:ident, $s:ident, $A:ident, $K:ident, $mol:ident, $cd:ident) -> $alias:ident,)+) => {
+            pub mod alias {
+                use super::super::{
+                    prefix::k,
+                    root::{cd, g, m, mol, s, A, K},
+                    Unit,
+                };
+                use typenum::{N1, P1, P2, Z0};
+
+                $(pub type $alias =
+                    Unit<(m, $m), ((k, g), $kg), (s, $s), (A, $A), (K, $K), (mol, $mol), (cd, $cd)>;)+
+            }
+
             $(pub struct $alias;
 
             impl $alias {
@@ -79,22 +99,36 @@ pub mod unit {
                 pub const fn new() -> Self {
                     Self
                 }
+
+                #[must_use]
+                pub const fn new_ref() -> &'static Self {
+                    &Self
+                }
+
             }
 
-            impl Upcast for $alias {
-                type Output =
+            impl ::core::ops::Deref for $alias {
+                type Target =
                     Unit<(m, $m), ((k, g), $kg), (s, $s), (A, $A), (K, $K), (mol, $mol), (cd, $cd)>;
+
+                fn deref(&self) -> &Self::Target {
+                    <Self::Target>::new_ref()
+                }
             }
 
-            impl Downcast
-                for Unit<(m, $m), ((k, g), $kg), (s, $s), (A, $A), (K, $K), (mol, $mol), (cd, $cd)>
+            impl ::core::ops::Deref for
+                Unit<(m, $m), ((k, g), $kg), (s, $s), (A, $A), (K, $K), (mol, $mol), (cd, $cd)>
             {
-                type Output = $alias;
+                type Target = $alias;
+
+                fn deref(&self) -> &Self::Target {
+                    <Self::Target>::new_ref()
+                }
             })+
         };
     }
 
-    impl_unit_upcast_downcast! {
+    unit_aliases! {
         (Z0, Z0, Z0, Z0, Z0, Z0, Z0) -> Dimensionless,
         (P1, Z0, Z0, Z0, Z0, Z0, Z0) -> Meter,
         (Z0, P1, Z0, Z0, Z0, Z0, Z0) -> Kilogram,
@@ -110,26 +144,15 @@ pub mod unit {
 
 #[allow(non_upper_case_globals)]
 pub mod consts {
-    use crate::unit::SimpleUnit;
+    use super::unit::alias::*;
 
-    use super::unit::*;
-
-    pub const m: SimpleUnit<Meter> = SimpleUnit::<Meter>::new();
-    pub const kg: SimpleUnit<Kilogram> = SimpleUnit::<Kilogram>::new();
-    pub const s: SimpleUnit<Second> = SimpleUnit::<Second>::new();
-    pub const A: SimpleUnit<Ampere> = SimpleUnit::<Ampere>::new();
-    pub const K: SimpleUnit<Kelvin> = SimpleUnit::<Kelvin>::new();
-    pub const mol: SimpleUnit<Mole> = SimpleUnit::<Mole>::new();
-    pub const cd: SimpleUnit<Candela> = SimpleUnit::<Candela>::new();
-}
-
-#[test]
-fn test_units() {
-    use consts::*;
-
-    let dist = 10_f64 * m;
-    let time = 2_f64 * s;
-    let speed = dist / time;
+    pub const m: Meter = Meter::new();
+    pub const kg: Kilogram = Kilogram::new();
+    pub const s: Second = Second::new();
+    pub const A: Ampere = Ampere::new();
+    pub const K: Kelvin = Kelvin::new();
+    pub const mol: Mole = Mole::new();
+    pub const cd: Candela = Candela::new();
 }
 
 /// Implement `Mul<Unit<...>>` & `Div<Unit<...>>` operators for $type (e. g. `f32`)

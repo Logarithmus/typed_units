@@ -10,3 +10,6 @@ name = "uom_ng"
 derivative = "2.2.0"
 paste = "1.0.6"
 typenum = { version = "1.15.0", default-features = false }
+
+[dev-dependencies]
+similar-asserts = "1.2.0"

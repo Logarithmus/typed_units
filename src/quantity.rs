@@ -3,12 +3,7 @@ use core::{
     ops::{Add, Div, Mul, Sub},
 };
 use derivative::Derivative;
-use typenum::{op, Prod, Quot};
-
-use crate::{
-    ops::{Downcast, Downcasted, Upcast, Upcasted},
-    unit::SimpleUnit,
-};
+use typenum::op;
 
 #[derive(Derivative)]
 #[derivative(Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -36,30 +31,16 @@ impl<U, V> Quantity<U, V> {
     }
 }
 
-impl<Ul, Ur, V> Mul<Quantity<Ur, V>> for Quantity<Ul, V>
-where
-    Ul: Upcast,
-    Ur: Upcast,
-    V: Mul<Output = V>,
-    Upcasted<Ul>: Mul<Upcasted<Ur>>,
-    Prod<Upcasted<Ul>, Upcasted<Ur>>: Downcast,
-{
-    type Output = Quantity<Downcasted<Prod<Upcasted<Ul>, Upcasted<Ur>>>, V>;
+impl<Ul: Mul<Ur>, Ur, V: Mul<Output = V>> Mul<Quantity<Ur, V>> for Quantity<Ul, V> {
+    type Output = Quantity<op!(Ul * Ur), V>;
 
     fn mul(self, rhs: Quantity<Ur, V>) -> Self::Output {
         Self::Output::new(self.value * rhs.value)
     }
 }
 
-impl<Ul, Ur, V> Div<Quantity<Ur, V>> for Quantity<Ul, V>
-where
-    Ul: Upcast,
-    Ur: Upcast,
-    V: Div<Output = V>,
-    Upcasted<Ul>: Div<Upcasted<Ur>>,
-    Quot<Upcasted<Ul>, Upcasted<Ur>>: Downcast,
-{
-    type Output = Quantity<Downcasted<Quot<Upcasted<Ul>, Upcasted<Ur>>>, V>;
+impl<Ul: Div<Ur>, Ur, V: Div<Output = V>> Div<Quantity<Ur, V>> for Quantity<Ul, V> {
+    type Output = Quantity<op!(Ul / Ur), V>;
 
     fn div(self, rhs: Quantity<Ur, V>) -> Self::Output {
         Self::Output::new(self.value / rhs.value)
@@ -89,8 +70,16 @@ mod tests {
     #[test]
     fn mul_quantity_by_quantity() {
         let speed = 10_f32 * (m / s);
-        let time = 3_f32 * (s * s / s);
+        let time = 3_f32 * s;
         let distance = speed * time;
         assert_eq!(distance, 30_f32 * m);
+    }
+
+    #[test]
+    fn div_quantity_by_quantity() {
+        let distance = 21_f32 * m;
+        let time = 3_f32 * s;
+        let speed = distance / time;
+        assert_eq!(speed, 7_f32 * (m / s));
     }
 }

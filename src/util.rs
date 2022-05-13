@@ -4,6 +4,7 @@ pub(crate) struct ConstStr<const N: usize> {
 }
 
 impl<const N: usize> ConstStr<N> {
+    #[must_use]
     pub const fn new() -> Self {
         ConstStr {
             data: [0u8; N],
@@ -11,6 +12,7 @@ impl<const N: usize> ConstStr<N> {
         }
     }
 
+    #[must_use]
     pub const fn append_str(mut self, s: &str) -> Self {
         let b = s.as_bytes();
         let mut i = 0;
@@ -23,6 +25,7 @@ impl<const N: usize> ConstStr<N> {
         self
     }
 
+    #[must_use]
     pub const fn as_str(&self) -> &str {
         let mut data: &[u8] = &self.data;
         let mut n = data.len() - self.len;
@@ -70,10 +73,19 @@ macro_rules! type_array {
         impl<$($param),+> $name<$($param),+> {
             const LEN: usize = $crate::util::count_idents!($($param),+);
 
+            #[allow(dead_code)]
+            #[must_use]
             pub const fn new() -> Self {
                 Self(::core::marker::PhantomData)
             }
 
+            #[allow(dead_code)]
+            #[must_use]
+            pub const fn new_ref() -> &'static Self {
+                &Self(::core::marker::PhantomData)
+            }
+
+            #[must_use]
             pub const fn len() -> usize {
                 Self::LEN
             }

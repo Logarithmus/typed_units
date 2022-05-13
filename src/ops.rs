@@ -1,20 +1,6 @@
-use typenum::{Integer, P1};
-
 use crate::util::{binary_ops_out_aliases, unary_ops_out_aliases};
 
-/// Downcast units to shorten compile errors
-pub trait Downcast {
-    type Output;
-}
-
-/// Opposite of `Downcast`
-pub trait Upcast {
-    type Output;
-}
-
 unary_ops_out_aliases! {
-    Upcast -> Upcasted,
-    Downcast -> Downcasted,
     Inv -> Inverse,
 }
 

@@ -1,3 +1,4 @@
+pub mod base_unit;
 pub mod iec_80000;
 pub mod isq;
 pub mod kind;
