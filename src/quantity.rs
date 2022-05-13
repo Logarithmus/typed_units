@@ -6,20 +6,20 @@ use derivative::Derivative;
 use typenum::op;
 
 #[derive(Derivative)]
-#[derivative(Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derivative(Debug, PartialEq, PartialOrd, Ord)]
 pub struct Quantity<U, V> {
     pub value: V,
 
     #[derivative(
         Debug = "ignore",
         PartialEq = "ignore",
-        // `Eq` is a marker trait, it doesn't care about struct contents, so no "ignore" needed
-        Eq,
         PartialOrd = "ignore",
         Ord = "ignore"
     )]
     phantom: PhantomData<U>,
 }
+
+impl<U, V: Eq> Eq for Quantity<U, V> {}
 
 impl<U, V> Quantity<U, V> {
     #[must_use]

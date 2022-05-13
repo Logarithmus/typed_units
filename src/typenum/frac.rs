@@ -13,6 +13,9 @@ use typenum::{Prod, Quot, Sum};
 ///
 /// We could wrap `(N, D)` into newtype struct like `struct Frac(N, D)`, but it would make
 /// `uom-ng` compile errors more verbose.
+//
+// We have to add prefix `Frac` as `core::ops::Add` is imported
+#[allow(clippy::module_name_repetitions)]
 pub trait FracAdd<Rhs> {
     type Output;
 }

@@ -144,7 +144,7 @@ pub mod unit {
 
 #[allow(non_upper_case_globals)]
 pub mod consts {
-    use super::unit::alias::*;
+    use super::unit::alias::{Ampere, Candela, Kelvin, Kilogram, Meter, Mole, Second};
 
     pub const m: Meter = Meter::new();
     pub const kg: Kilogram = Kilogram::new();
