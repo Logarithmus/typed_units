@@ -68,18 +68,30 @@ mod tests {
     use crate::isq::consts::*;
 
     #[test]
+    fn add_quantity_to_quantity() {
+        let v1 = 10_f32 * (m / s);
+        let v2 = 3_f32 * (m / s);
+        assert_eq!(v1 + v2, 13_f32 * (m / s));
+    }
+
+    #[test]
+    fn sub_quantity_from_quantity() {
+        let v1 = 10_f32 * (m / s);
+        let v2 = 3_f32 * (m / s);
+        assert_eq!(v1 - v2, 7_f32 * (m / s));
+    }
+
+    #[test]
     fn mul_quantity_by_quantity() {
         let speed = 10_f32 * (m / s);
         let time = 3_f32 * s;
-        let distance = speed * time;
-        assert_eq!(distance, 30_f32 * m);
+        assert_eq!(speed * time, 30_f32 * m);
     }
 
     #[test]
     fn div_quantity_by_quantity() {
         let distance = 21_f32 * m;
         let time = 3_f32 * s;
-        let speed = distance / time;
-        assert_eq!(speed, 7_f32 * (m / s));
+        assert_eq!(distance / time, 7_f32 * (m / s));
     }
 }
