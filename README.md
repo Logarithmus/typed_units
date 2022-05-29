@@ -6,4 +6,5 @@ Design goals:
 - [x] `let speed = 10_f32 * (m / s)` support (like `dimensioned`)
 - [ ] Storage types, prefixed unit aliases & unit categories toggled via cargo features
 - [x] Lower case constants
+- [ ] Unit conversions
 - [ ] Nalgebra support
