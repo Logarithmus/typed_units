@@ -11,7 +11,7 @@ pub mod prefix {
         (pebi, "pebi", Pi, "Pi", 1024, 5),
         (exbi, "exbi", Ei, "Ei", 1024, 6),
         (zebi, "zebi", Zi, "Zi", 1024, 7),
-        (yobi, "yobi", Yi, "Yi", 1024, 8)
+        (yobi, "yobi", Yi, "Yi", 1024, 8),
     }
 }
 
@@ -22,6 +22,6 @@ pub mod root {
     #[rustfmt::skip]
     roots! {
         (Byte, "byte", B, "B"),
-        (Bit, "bit", bit, "bit")
+        (Bit, "bit", bit, "bit"),
     }
 }

@@ -1,25 +1,43 @@
+use crate::base_unit::ConvertFrom;
+use const_default::ConstDefault;
 use core::{
+    cmp::Ordering,
+    fmt::{self, Debug, Display, Formatter},
     marker::PhantomData,
     ops::{Add, Div, Mul, Sub},
 };
-use derivative::Derivative;
 use typenum::op;
 
-#[derive(Derivative)]
-#[derivative(Debug, PartialEq, PartialOrd, Ord)]
 pub struct Quantity<U, V> {
     pub value: V,
-
-    #[derivative(
-        Debug = "ignore",
-        PartialEq = "ignore",
-        PartialOrd = "ignore",
-        Ord = "ignore"
-    )]
     phantom: PhantomData<U>,
 }
 
+impl<U: Debug + ConstDefault, V: Debug> Debug for Quantity<U, V> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?} {:?}", self.value, U::DEFAULT)
+    }
+}
+
+impl<U, V: PartialEq> PartialEq for Quantity<U, V> {
+    fn eq(&self, other: &Self) -> bool {
+        self.value == other.value
+    }
+}
+
 impl<U, V: Eq> Eq for Quantity<U, V> {}
+
+impl<U, V: PartialOrd> PartialOrd for Quantity<U, V> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.value.partial_cmp(&other.value)
+    }
+}
+
+impl<U, V: Ord> Ord for Quantity<U, V> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.value.cmp(&other.value)
+    }
+}
 
 impl<U, V> Quantity<U, V> {
     #[must_use]
@@ -28,6 +46,17 @@ impl<U, V> Quantity<U, V> {
             value,
             phantom: PhantomData,
         }
+    }
+
+    pub fn from<Uother>(other: Quantity<Uother, V>) -> Self
+    where
+        U: ConvertFrom<Uother, V>,
+    {
+        Self::new(U::convert_from(other.value))
+    }
+
+    pub fn into<Uother: ConvertFrom<U, V>>(self) -> Quantity<Uother, V> {
+        Quantity::new(Uother::convert_from(self.value))
     }
 }
 
@@ -63,6 +92,12 @@ impl<U, V: Sub<Output = V>> Sub for Quantity<U, V> {
     }
 }
 
+impl<U: Display + ConstDefault, V: Display> Display for Quantity<U, V> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{} {}", self.value, U::DEFAULT)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::isq::consts::*;
@@ -71,6 +106,18 @@ mod tests {
     fn add_quantity_to_quantity() {
         let v1 = 10_f32 * (m / s);
         let v2 = 3_f32 * (m / s);
+        let volume = 100 * (m * m * m);
+        let density = 1000 * (kg / (m * m * m));
+        let destiny = 1000 * (kg / (m * m * m) / kg);
+        let destiny2 = 1000 * (kg / (m * m * m) / s / s);
+        println!(
+            "{}\n{}\n{}\n{}\n{}\n{}",
+            v1, v2, volume, density, destiny, destiny2
+        );
+        println!(
+            "{:?}\n{:?}\n{:?}\n{:?}\n{:?}\n{:?}",
+            v1, v2, volume, density, destiny, destiny2
+        );
         assert_eq!(v1 + v2, 13_f32 * (m / s));
     }
 

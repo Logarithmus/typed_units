@@ -4,23 +4,33 @@ use crate::Name;
 pub trait Root: Name {}
 
 macro_rules! roots {
-    ($(($full:ident, $full_str:literal, $short:ident, $short_str:literal)),+) => {
+    ($(($full:ident, $full_str:literal, $short:ident, $short_str:literal),)+) => {
         $(#[allow(non_camel_case_types)]
-        pub struct $short;
+        pub struct $full;
 
         #[allow(non_camel_case_types)]
-        pub type $full = $short;
+        pub type $short = $full;
 
         impl $crate::Root for $full {}
 
-        impl $crate::Name for $short {
+        impl $crate::Name for $full {
             const SHORT: &'static str = $short_str;
             const FULL: &'static str = $full_str;
         }
 
-        impl core::fmt::Display for $short {
+        impl const_default::ConstDefault for $full {
+            const DEFAULT: Self = Self;
+        }
+
+        impl core::fmt::Display for $full {
             fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
                 <Self as $crate::Name>::SHORT.fmt(f)
+            }
+        }
+
+        impl core::fmt::Debug for $full {
+            fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+                <Self as $crate::Name>::FULL.fmt(f)
             }
         })+
     };

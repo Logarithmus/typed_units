@@ -1,8 +1,18 @@
 use crate::{
+    base_unit::ConvertFrom,
+    base_unit::{Exp, Pre},
     ops::{Div as UnitDiv, Inv as UnitInv, Mul as UnitMul},
     util::{impl_binary_op_for_type_array, impl_unary_op_for_type_array, type_array},
+    Name, Prefix,
 };
-use core::ops::{Div, Mul};
+use const_default::ConstDefault;
+use core::{
+    fmt::{self, Debug, Display, Formatter},
+    i32,
+    marker::PhantomData,
+    ops::{Div, Mul},
+};
+use typenum::Pow;
 
 /// Metric prefixes
 pub mod prefix {
@@ -29,23 +39,28 @@ pub mod prefix {
         (peta,  "peta",  P,  "P",  10,  15),
         (exa,   "exa",   E,  "E",  10,  18),
         (zetta, "zetta", Z,  "Z",  10,  21),
-        (yotta, "yotta", Y,  "Y",  10,  24)
+        (yotta, "yotta", Y,  "Y",  10,  24),
     }
 }
 
 /// Base units without prefix
 pub mod root {
-    use crate::{kind, root::roots, Prefix, Root};
+    use crate::{base_unit::Pre, kind, root::roots, Root};
 
     #[rustfmt::skip]
     roots! {
         (meter,   "meter",   m,   "m"),
         (gram,    "gram",    g,   "g"),
         (second,  "second",  s,   "s"),
-        (ampere,  "ampere",  A,   "A"),
-        (kelvin,  "kelvin",  K,   "K"),
+        (ampere,  "Ampere",  A,   "A"),
+        (kelvin,  "Kelvin",  K,   "K"),
         (mole,    "mole",    mol, "mol"),
-        (candela, "candela", cd,  "cd")
+        (candela, "candela", cd,  "cd"),
+        (Celsius, "degree Celsius", degC,  "°C"),
+        (Fahrenheit, "degree Fahrenheit", degF,  "°F"),
+        (inch, "inch", r#in,  r#"""#),
+        (foot, "foot", ft,  "ft"),
+        (yard, "yard", yd,  "yd"),
     }
 
     impl kind::Length for meter {}
@@ -56,13 +71,13 @@ pub mod root {
     impl kind::AmountOfSubstance for mole {}
     impl kind::LuminousIntensity for candela {}
 
-    impl<P: Prefix, R: Root + kind::Length> kind::Length for (P, R) {}
-    impl<P: Prefix, R: Root + kind::Mass> kind::Mass for (P, R) {}
-    impl<P: Prefix, R: Root + kind::Time> kind::Time for (P, R) {}
-    impl<P: Prefix, R: Root + kind::Current> kind::Current for (P, R) {}
-    impl<P: Prefix, R: Root + kind::Temperature> kind::Temperature for (P, R) {}
-    impl<P: Prefix, R: Root + kind::AmountOfSubstance> kind::AmountOfSubstance for (P, R) {}
-    impl<P: Prefix, R: Root + kind::LuminousIntensity> kind::LuminousIntensity for (P, R) {}
+    impl<P, R: Root + kind::Length> kind::Length for Pre<P, R> {}
+    impl<P, R: Root + kind::Mass> kind::Mass for Pre<P, R> {}
+    impl<P, R: Root + kind::Time> kind::Time for Pre<P, R> {}
+    impl<P, R: Root + kind::Current> kind::Current for Pre<P, R> {}
+    impl<P, R: Root + kind::Temperature> kind::Temperature for Pre<P, R> {}
+    impl<P, R: Root + kind::AmountOfSubstance> kind::AmountOfSubstance for Pre<P, R> {}
+    impl<P, R: Root + kind::LuminousIntensity> kind::LuminousIntensity for Pre<P, R> {}
 }
 
 type_array!(Unit<L, M, Ti, I, Te, N, J>);
@@ -70,12 +85,64 @@ impl_binary_op_for_type_array!(Unit<L, M, Ti, I, Te, N, J>, Mul, UnitMul);
 impl_binary_op_for_type_array!(Unit<L, M, Ti, I, Te, N, J>, Div, UnitDiv);
 impl_unary_op_for_type_array!(Unit<L, M, Ti, I, Te, N, J>, UnitInv, UnitInv);
 
+impl<L, M, Ti, I, Te, N, J> ConstDefault for Unit<L, M, Ti, I, Te, N, J> {
+    const DEFAULT: Self = Self(PhantomData);
+}
+
+macro_rules! impl_trait_for_unit {
+    ($unit:ident<$($base_unit:ident),+>, $trait:ident, $fun:ident) => {
+        impl<$($base_unit: crate::name::$trait + Exp),+> $trait for $unit<$($base_unit),+> {
+            fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+                let mut numerator = vec![];
+                let mut denominator = vec![];
+                let mut numerator_count = 0;
+                let mut denominator_count = 0;
+                $(match $base_unit::EXP {
+                    1 => {
+                        numerator.push($base_unit::$fun());
+                        numerator_count += 1;
+                    }
+                    2..=i32::MAX => {
+                        numerator.push(format!("#{}{}", $base_unit::$fun(),  crate::name::superscript($base_unit::EXP)));
+                        numerator_count += 1;
+                    }
+                    -1 => {
+                        denominator.push($base_unit::$fun());
+                        denominator_count += 1;
+                    }
+                    i32::MIN..=-2 => {
+                        denominator.push(format!("{}{}", $base_unit::$fun(), crate::name::superscript(-$base_unit::EXP)));
+                        denominator_count += 1;
+                    }
+                    0 => (),
+                })+
+
+                match (numerator_count, denominator_count) {
+                    (0, 0) => (),
+                    (_, 0) => write!(f, "{}", numerator.join("⋅"))?,
+                    (0, _) => write!(f, "1/{}", denominator.join("⋅"))?,
+                    (1, 1) => write!(f, "{}/{}", numerator[0], denominator[0])?,
+                    (1, _) => write!(f, "{}/({})", numerator[0], denominator.join("⋅"))?,
+                    (_, 1) => write!(f, "({})/{}", numerator.join("⋅"), denominator[0])?,
+                    _      => write!(f, "({})/({})", numerator.join("⋅"), denominator.join("."))?,
+                }
+
+                Ok(())
+            }
+        }
+    };
+}
+
+impl_trait_for_unit! {Unit<L, M, Ti, I, Te, N, J>, Display, display}
+impl_trait_for_unit! {Unit<L, M, Ti, I, Te, N, J>, Debug, debug}
+
 pub mod unit {
     use super::{
         prefix::k,
         root::{cd, g, m, mol, s, A, K},
         Unit,
     };
+    use crate::base_unit::Pre;
     use typenum::{N1, P1, P2, Z0};
 
     macro_rules! unit_aliases {
@@ -86,10 +153,11 @@ pub mod unit {
                     root::{cd, g, m, mol, s, A, K},
                     Unit,
                 };
+                use crate::base_unit::Pre;
                 use typenum::{N1, P1, P2, Z0};
 
                 $(pub type $alias =
-                    Unit<(m, $m), ((k, g), $kg), (s, $s), (A, $A), (K, $K), (mol, $mol), (cd, $cd)>;)+
+                    Unit<(m, $m), (Pre<k, g>, $kg), (s, $s), (A, $A), (K, $K), (mol, $mol), (cd, $cd)>;)+
             }
 
             $(pub struct $alias;
@@ -109,7 +177,7 @@ pub mod unit {
 
             impl ::core::ops::Deref for $alias {
                 type Target =
-                    Unit<(m, $m), ((k, g), $kg), (s, $s), (A, $A), (K, $K), (mol, $mol), (cd, $cd)>;
+                    Unit<(m, $m), (Pre<k, g>, $kg), (s, $s), (A, $A), (K, $K), (mol, $mol), (cd, $cd)>;
 
                 fn deref(&self) -> &Self::Target {
                     <Self::Target>::new_ref()
@@ -117,7 +185,7 @@ pub mod unit {
             }
 
             impl ::core::ops::Deref for
-                Unit<(m, $m), ((k, g), $kg), (s, $s), (A, $A), (K, $K), (mol, $mol), (cd, $cd)>
+                Unit<(m, $m), (Pre<k, g>, $kg), (s, $s), (A, $A), (K, $K), (mol, $mol), (cd, $cd)>
             {
                 type Target = $alias;
 

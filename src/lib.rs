@@ -8,7 +8,6 @@ pub mod prefix;
 pub mod quantity;
 pub mod root;
 pub mod typenum;
-pub mod unit;
 pub mod util;
 
 pub use crate::{name::Name, prefix::Prefix, quantity::Quantity, root::Root};

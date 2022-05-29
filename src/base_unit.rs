@@ -1,28 +1,66 @@
 use crate::{
-    name::NameBuf,
     ops::{Div as UnitDiv, Inv, Mul as UnitMul},
     typenum::Positive,
-    util::{concat_const_str, ConstStr},
     Name, Prefix, Root,
 };
-use core::ops::{Add, Neg, Sub};
-use typenum::{private::PrivateIntegerAdd, Cmp, Compare, Diff, NInt, Negate, PInt, Sum, Z0};
+use core::{
+    fmt::{self, Debug, Display, Formatter},
+    i32,
+    marker::PhantomData,
+    ops::{Add, Neg, Sub},
+};
+use typenum::{
+    private::PrivateIntegerAdd, Cmp, Compare, Diff, Integer, NInt, Negate, PInt, Sum, Z0,
+};
+
+/// Prefixed unit
+pub struct Pre<P, R>(PhantomData<(P, R)>);
+
+pub trait Exp {
+    const EXP: i32;
+}
+
+impl<R: Root> Exp for R {
+    const EXP: i32 = 1;
+}
+
+impl<P, R: Root> Exp for Pre<P, R> {
+    const EXP: i32 = 1;
+}
+
+impl<U, E: Integer> Exp for (U, E) {
+    const EXP: i32 = E::I32;
+}
 
 /// Base unit for system of units
 pub trait BaseUnit {}
 
-impl<P: Prefix, R: Root> BaseUnit for (P, R) {}
+impl<P, R> BaseUnit for Pre<P, R> {}
 
 impl<R: Root> BaseUnit for R {}
 
-impl<P: Prefix, R: Root> NameBuf<16, 64> for (P, R) {
-    const SHORT_BUF: ConstStr<16> = concat_const_str!(P::SHORT, R::SHORT);
-    const FULL_BUF: ConstStr<64> = concat_const_str!(P::FULL, R::FULL);
+impl<P: Name, R: Name> crate::name::Display for Pre<P, R> {
+    fn display() -> String {
+        format!("{}{}", P::SHORT, R::SHORT)
+    }
 }
 
-impl<P: Prefix, R: Root> Name for (P, R) {
-    const SHORT: &'static str = Self::SHORT_BUF.as_str();
-    const FULL: &'static str = Self::FULL_BUF.as_str();
+impl<P: Name, R: Name> crate::name::Debug for Pre<P, R> {
+    fn debug() -> String {
+        format!("{}{}", P::FULL, R::FULL)
+    }
+}
+
+impl<U: crate::name::Display, E> crate::name::Display for (U, E) {
+    fn display() -> String {
+        U::display()
+    }
+}
+
+impl<U: crate::name::Debug, E> crate::name::Debug for (U, E) {
+    fn debug() -> String {
+        U::debug()
+    }
 }
 
 /// Implements operators (`Mul` & `Div`) for `(U, E)`,
@@ -117,3 +155,12 @@ where
 impl<U, E: Neg> Inv for (U, E) {
     type Output = (U, Negate<E>);
 }
+
+pub trait ConvertFrom<U, V> {
+    fn convert_from(value: V) -> V;
+}
+
+// impl<Pl: Prefix<V>, Rl, Pr: Prefix<V>, Rr, V> ConvertFrom<Pre<Pl, Rl>, V> for Pre<Pr, Rr> {
+//     fn from(value: V) -> V {
+//     }
+// }
