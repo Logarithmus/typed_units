@@ -1,9 +1,7 @@
 use crate::{
-    base_unit::ConvertFrom,
-    base_unit::{Exp, Pre},
+    base_unit::Exp,
     ops::{Div as UnitDiv, Inv as UnitInv, Mul as UnitMul},
     util::{impl_binary_op_for_type_array, impl_unary_op_for_type_array, type_array},
-    Name, Prefix,
 };
 use const_default::ConstDefault;
 use core::{
@@ -12,7 +10,6 @@ use core::{
     marker::PhantomData,
     ops::{Div, Mul},
 };
-use typenum::Pow;
 
 /// Metric prefixes
 pub mod prefix {

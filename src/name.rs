@@ -1,18 +1,9 @@
-use crate::util::ConstStr;
-use core::fmt::{self, Formatter};
-
 /// Short & full names
 pub trait Name {
     /// Short name
     const SHORT: &'static str;
     /// Full name
     const FULL: &'static str;
-}
-
-/// Buffer to store a name inside `ConstStr`
-pub(crate) trait NameBuf<const S: usize, const F: usize> {
-    const SHORT_BUF: ConstStr<S>;
-    const FULL_BUF: ConstStr<F>;
 }
 
 pub trait Display {

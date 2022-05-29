@@ -1,10 +1,9 @@
 use crate::{
     ops::{Div as UnitDiv, Inv, Mul as UnitMul},
     typenum::Positive,
-    Name, Prefix, Root,
+    Name, Root,
 };
 use core::{
-    fmt::{self, Debug, Display, Formatter},
     i32,
     marker::PhantomData,
     ops::{Add, Neg, Sub},
