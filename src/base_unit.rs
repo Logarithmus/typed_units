@@ -64,7 +64,7 @@ impl<U: crate::name::Debug, E> crate::name::Debug for (U, E) {
 
 /// Implements operators (`Mul` & `Div`) for `(U, E)`,
 /// where `U` -- base unit with or without prefix, `E` -- exponent
-macro_rules! impl_ops_for_base_unit_0 {
+macro_rules! impl_ops_for_exp_unit_0 {
     ($($op:ident: $out:ident,)+) => {
         $(impl<Ul: BaseUnit, Ur: BaseUnit> $op<(Ur, Z0)> for (Ul, Z0) {
             type Output = (Ul, Z0);
@@ -88,7 +88,7 @@ macro_rules! impl_ops_for_base_unit_0 {
     };
 }
 
-impl_ops_for_base_unit_0! {
+impl_ops_for_exp_unit_0! {
     UnitMul: Sum,
     UnitDiv: Diff,
 }

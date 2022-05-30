@@ -4,12 +4,9 @@ use crate::Name;
 pub trait Root: Name {}
 
 macro_rules! roots {
-    ($(($full:ident, $full_str:literal, $short:ident, $short_str:literal),)+) => {
+    ($(($full:ident, $full_str:literal, $short_str:literal),)+) => {
         $(#[allow(non_camel_case_types)]
         pub struct $full;
-
-        #[allow(non_camel_case_types)]
-        pub type $short = $full;
 
         impl $crate::Root for $full {}
 
@@ -37,3 +34,17 @@ macro_rules! roots {
 }
 
 pub(crate) use roots;
+
+macro_rules! roots_with_alias {
+    ($(($full:ident, $full_str:literal, $short:ident, $short_str:literal),)+) => {
+        crate::root::roots! {
+            $(($full, $full_str, $short_str),)+
+        }
+
+        $(#[allow(non_camel_case_types)]
+        pub type $short = $full;)+
+
+    };
+}
+
+pub(crate) use roots_with_alias;

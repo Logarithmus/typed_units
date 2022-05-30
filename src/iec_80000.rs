@@ -17,11 +17,11 @@ pub mod prefix {
 
 /// Base units without prefix
 pub mod root {
-    use crate::root::roots;
+    use crate::root::roots_with_alias;
 
     #[rustfmt::skip]
-    roots! {
+    roots_with_alias! {
         (Byte, "byte", B, "B"),
-        (Bit, "bit", bit, "bit"),
+        (Bit,  "bit", bit, "bit"),
     }
 }

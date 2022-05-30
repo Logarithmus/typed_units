@@ -42,29 +42,49 @@ pub mod prefix {
 
 /// Base units without prefix
 pub mod root {
-    use crate::{base_unit::Pre, kind, root::roots, Root};
+    use std::ops::Add;
+
+    use crate::{
+        base_unit::{ConvertFrom, Pre},
+        kind,
+        root::{roots, roots_with_alias},
+        Root,
+    };
+
+    #[rustfmt::skip]
+    roots_with_alias! {
+        (meter,      "meter",             m,    "m"),
+        (AstroUnit,  "astronomical unit", au,   "AU"),
+        (gram,       "gram",              g,    "g"),
+        (second,     "second",            s,    "s"),
+        (ampere,     "Ampere",            A,    "A"),
+        (Kelvin,     "Kelvin",            K,    "K"),
+        (Celsius,    "degree Celsius",    degC, "°C"),
+        (Fahrenheit, "degree Fahrenheit", degF, "°F"),
+        (mole,       "mole",              mol,  "mol"),
+        (candela,    "candela",           cd,   "cd"),
+        (foot,       "foot",              ft,   "ft"),
+        (yard,       "yard",              yd,   "yd"),
+        (degree,     "degree",            deg,  "°"),
+        (radian,     "radian",            rad,  "rad"),
+    }
 
     #[rustfmt::skip]
     roots! {
-        (meter,   "meter",   m,   "m"),
-        (gram,    "gram",    g,   "g"),
-        (second,  "second",  s,   "s"),
-        (ampere,  "Ampere",  A,   "A"),
-        (kelvin,  "Kelvin",  K,   "K"),
-        (mole,    "mole",    mol, "mol"),
-        (candela, "candela", cd,  "cd"),
-        (Celsius, "degree Celsius", degC,  "°C"),
-        (Fahrenheit, "degree Fahrenheit", degF,  "°F"),
-        (inch, "inch", r#in,  r#"""#),
-        (foot, "foot", ft,  "ft"),
-        (yard, "yard", yd,  "yd"),
+        (inch, "inch", r#"""#),
+    }
+
+    impl<V: Add<Output = V> + From<f64>> ConvertFrom<Celsius, V> for Kelvin {
+        fn convert_from(value: V) -> V {
+            value + V::from(273.15)
+        }
     }
 
     impl kind::Length for meter {}
     impl kind::Mass for gram {}
     impl kind::Time for second {}
     impl kind::Current for ampere {}
-    impl kind::Temperature for kelvin {}
+    impl kind::Temperature for Kelvin {}
     impl kind::AmountOfSubstance for mole {}
     impl kind::LuminousIntensity for candela {}
 
@@ -130,8 +150,8 @@ macro_rules! impl_trait_for_unit {
     };
 }
 
-impl_trait_for_unit! {Unit<L, M, Ti, I, Te, N, J>, Display, display}
-impl_trait_for_unit! {Unit<L, M, Ti, I, Te, N, J>, Debug, debug}
+impl_trait_for_unit!(Unit<L, M, Ti, I, Te, N, J>, Display, display);
+impl_trait_for_unit!(Unit<L, M, Ti, I, Te, N, J>, Debug, debug);
 
 pub mod unit {
     use super::{
@@ -144,52 +164,8 @@ pub mod unit {
 
     macro_rules! unit_aliases {
         ($(($m:ident, $kg:ident, $s:ident, $A:ident, $K:ident, $mol:ident, $cd:ident) -> $alias:ident,)+) => {
-            pub mod alias {
-                use super::super::{
-                    prefix::k,
-                    root::{cd, g, m, mol, s, A, K},
-                    Unit,
-                };
-                use crate::base_unit::Pre;
-                use typenum::{N1, P1, P2, Z0};
-
-                $(pub type $alias =
-                    Unit<(m, $m), (Pre<k, g>, $kg), (s, $s), (A, $A), (K, $K), (mol, $mol), (cd, $cd)>;)+
-            }
-
-            $(pub struct $alias;
-
-            impl $alias {
-                #[must_use]
-                pub const fn new() -> Self {
-                    Self
-                }
-
-                #[must_use]
-                pub const fn new_ref() -> &'static Self {
-                    &Self
-                }
-
-            }
-
-            impl ::core::ops::Deref for $alias {
-                type Target =
-                    Unit<(m, $m), (Pre<k, g>, $kg), (s, $s), (A, $A), (K, $K), (mol, $mol), (cd, $cd)>;
-
-                fn deref(&self) -> &Self::Target {
-                    <Self::Target>::new_ref()
-                }
-            }
-
-            impl ::core::ops::Deref for
-                Unit<(m, $m), (Pre<k, g>, $kg), (s, $s), (A, $A), (K, $K), (mol, $mol), (cd, $cd)>
-            {
-                type Target = $alias;
-
-                fn deref(&self) -> &Self::Target {
-                    <Self::Target>::new_ref()
-                }
-            })+
+            $(pub type $alias =
+                Unit<(m, $m), (Pre<k, g>, $kg), (s, $s), (A, $A), (K, $K), (mol, $mol), (cd, $cd)>;)+
         };
     }
 
@@ -209,15 +185,19 @@ pub mod unit {
 
 #[allow(non_upper_case_globals)]
 pub mod consts {
-    use super::unit::alias::{Ampere, Candela, Kelvin, Kilogram, Meter, Mole, Second};
+    use super::{
+        unit::{Ampere, Candela, Kelvin, Kilogram, Meter, Mole, Second},
+        Unit,
+    };
+    use const_default::ConstDefault;
 
-    pub const m: Meter = Meter::new();
-    pub const kg: Kilogram = Kilogram::new();
-    pub const s: Second = Second::new();
-    pub const A: Ampere = Ampere::new();
-    pub const K: Kelvin = Kelvin::new();
-    pub const mol: Mole = Mole::new();
-    pub const cd: Candela = Candela::new();
+    pub const m: Meter = Unit::DEFAULT;
+    pub const kg: Kilogram = Unit::DEFAULT;
+    pub const s: Second = Unit::DEFAULT;
+    pub const A: Ampere = Unit::DEFAULT;
+    pub const K: Kelvin = Unit::DEFAULT;
+    pub const mol: Mole = Unit::DEFAULT;
+    pub const cd: Candela = Unit::DEFAULT;
 }
 
 /// Implement `Mul<Unit<...>>` & `Div<Unit<...>>` operators for $type (e. g. `f32`)
