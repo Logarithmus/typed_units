@@ -24,3 +24,13 @@ where
 {
     type Output = op!(abs(L * R) / gcd(L, R));
 }
+
+pub trait Alias {
+    type Alias;
+}
+
+pub struct P1;
+
+impl Alias for typenum::P1 {
+    type Alias = P1;
+}

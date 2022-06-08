@@ -60,6 +60,12 @@ impl<U, V> Quantity<U, V> {
     }
 }
 
+impl<U, V: Default> Default for Quantity<U, V> {
+    fn default() -> Self {
+        Self::new(Default::default())
+    }
+}
+
 impl<Ul: Mul<Ur>, Ur, V: Mul<Output = V>> Mul<Quantity<Ur, V>> for Quantity<Ul, V> {
     type Output = Quantity<op!(Ul * Ur), V>;
 
@@ -106,10 +112,10 @@ mod tests {
     fn add_quantity_to_quantity() {
         let v1 = 10_f32 * (m / s);
         let v2 = 3_f32 * (m / s);
-        let volume = 100 * (m * m * m);
-        let density = 1000 * (kg / (m * m * m));
-        let destiny = 1000 * (kg / (m * m * m) / kg);
-        let destiny2 = 1000 * (kg / (m * m * m) / s / s);
+        let volume = 100_i32 * (m * m * m);
+        let density = 1000_i32 * (kg / (m * m * m));
+        let destiny = 1000_i32 * (kg / (m * m * m) / kg);
+        let destiny2 = 1000_i32 * (kg / (m * m * m) / s / s);
         println!(
             "{}\n{}\n{}\n{}\n{}\n{}",
             v1, v2, volume, density, destiny, destiny2

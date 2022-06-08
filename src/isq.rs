@@ -1,5 +1,6 @@
 use crate::{
     base_unit::Exp,
+    name::superscript,
     ops::{Div as UnitDiv, Inv as UnitInv, Mul as UnitMul},
     util::{impl_binary_op_for_type_array, impl_unary_op_for_type_array, type_array},
 };
@@ -10,6 +11,7 @@ use core::{
     marker::PhantomData,
     ops::{Div, Mul},
 };
+use std::ops::Neg;
 
 /// Metric prefixes
 pub mod prefix {
@@ -106,45 +108,95 @@ impl<L, M, Ti, I, Te, N, J> ConstDefault for Unit<L, M, Ti, I, Te, N, J> {
     const DEFAULT: Self = Self(PhantomData);
 }
 
+#[derive(Clone, Debug)]
+struct ExpUnit {
+    pub name: String,
+    pub exp: i32,
+}
+
+impl ExpUnit {
+    fn new(name: String, exp: i32) -> Self {
+        Self { name, exp }
+    }
+}
+
+impl Neg for ExpUnit {
+    type Output = ExpUnit;
+
+    fn neg(self) -> Self::Output {
+        ExpUnit {
+            exp: -self.exp,
+            ..self
+        }
+    }
+}
+
+impl Display for ExpUnit {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.name)?;
+        if self.exp.abs() != 1 {
+            write!(f, "{}", superscript(self.exp))?;
+        }
+        Ok(())
+    }
+}
+
+fn fmt_product_of_units(f: &mut Formatter<'_>, units: &[ExpUnit], sign: bool) -> fmt::Result {
+    write!(
+        f,
+        "{}",
+        if sign {
+            units[0].clone()
+        } else {
+            -units[0].clone()
+        }
+    )?;
+    for unit in &units[1..] {
+        write!(f, "⋅{}", if sign { unit.clone() } else { -unit.clone() })?;
+    }
+    Ok(())
+}
+
 macro_rules! impl_trait_for_unit {
     ($unit:ident<$($base_unit:ident),+>, $trait:ident, $fun:ident) => {
         impl<$($base_unit: crate::name::$trait + Exp),+> $trait for $unit<$($base_unit),+> {
             fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-                let mut numerator = vec![];
-                let mut denominator = vec![];
-                let mut numerator_count = 0;
-                let mut denominator_count = 0;
-                $(match $base_unit::EXP {
-                    1 => {
-                        numerator.push($base_unit::$fun());
-                        numerator_count += 1;
-                    }
-                    2..=i32::MAX => {
-                        numerator.push(format!("#{}{}", $base_unit::$fun(),  crate::name::superscript($base_unit::EXP)));
-                        numerator_count += 1;
-                    }
-                    -1 => {
-                        denominator.push($base_unit::$fun());
-                        denominator_count += 1;
-                    }
-                    i32::MIN..=-2 => {
-                        denominator.push(format!("{}{}", $base_unit::$fun(), crate::name::superscript(-$base_unit::EXP)));
-                        denominator_count += 1;
-                    }
-                    0 => (),
-                })+
+                let (numerator, denominator): (Vec<_>, Vec<_>) = [
+                    $(ExpUnit::new($base_unit::$fun(), $base_unit::EXP)),+
+                ].into_iter()
+                    .filter(|unit| unit.exp != 0)
+                    .partition(|unit| unit.exp > 0);
 
-                match (numerator_count, denominator_count) {
-                    (0, 0) => (),
-                    (_, 0) => write!(f, "{}", numerator.join("⋅"))?,
-                    (0, _) => write!(f, "1/{}", denominator.join("⋅"))?,
-                    (1, 1) => write!(f, "{}/{}", numerator[0], denominator[0])?,
-                    (1, _) => write!(f, "{}/({})", numerator[0], denominator.join("⋅"))?,
-                    (_, 1) => write!(f, "({})/{}", numerator.join("⋅"), denominator[0])?,
-                    _      => write!(f, "({})/({})", numerator.join("⋅"), denominator.join("."))?,
+                match (numerator.len(), denominator.len()) {
+                    (0, 0) => Ok(()),
+                    (_, 0) => fmt_product_of_units(f, &numerator, true),
+                    (0, _) => fmt_product_of_units(f, &denominator, true),
+                    (1, 1) => {
+                        fmt_product_of_units(f, &numerator, true)?;
+                        write!(f, "/")?;
+                        fmt_product_of_units(f, &denominator, false)
+
+                    }
+                    (1, _) => {
+                        fmt_product_of_units(f, &numerator, true)?;
+                        write!(f, "/(")?;
+                        fmt_product_of_units(f, &denominator, false)?;
+                        write!(f, ")")
+                    }
+                    (_, 1) => {
+                        write!(f, "(")?;
+                        fmt_product_of_units(f, &numerator, true)?;
+                        write!(f, ")/")?;
+                        fmt_product_of_units(f, &denominator, false)
+                    }
+                    _      => {
+                        write!(f, "(")?;
+                        fmt_product_of_units(f, &numerator, true)?;
+                        write!(f, ")/(")?;
+                        fmt_product_of_units(f, &denominator, false)?;
+                        write!(f, ")")
+                    }
                 }
-
-                Ok(())
             }
         }
     };
