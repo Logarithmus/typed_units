@@ -6,8 +6,13 @@ edition = "2021"
 [lib]
 name = "uom_ng"
 
+[[bin]]
+name = "uom_ng_bin"
+path = "src/main.rs"
+
 [dependencies]
 const-default = { version = "1.0.0", default-features = false }
+nalgebra = { version = "0.31.0", default-features = false, features = ["std"] }
 num-traits = { version = "0.2.15", default-features = false }
 paste = "1.0.6"
 typenum = { version = "1.15.0", default-features = false }

@@ -11,6 +11,7 @@ use core::{
     marker::PhantomData,
     ops::{Div, Mul},
 };
+use nalgebra::{RowVector3, Vector3};
 use std::ops::Neg;
 
 /// Metric prefixes
@@ -255,7 +256,7 @@ pub mod consts {
 /// Implement `Mul<Unit<...>>` & `Div<Unit<...>>` operators for $type (e. g. `f32`)
 /// `32_f32 * Unit<...>`, `32_f32 / Unit<...>`
 macro_rules! impl_mul_div_for_value_by_unit {
-    ($type:ty, $feat:literal) => {
+    ($type:ident, $feat:literal) => {
         // 10 * km
         //#[cfg(feature = $feat)]
         impl<L, M, Ti, I, Te, N, J> ::core::ops::Mul<Unit<L, M, Ti, I, Te, N, J>> for $type {
@@ -286,6 +287,37 @@ macro_rules! impl_mul_div_for_value_by_unit {
             }
         }
     };
+    ($type:ident<$($generic:ident),+>, $feat:literal) => {
+        // 10 * km
+        //#[cfg(feature = $feat)]
+        impl<L, M, Ti, I, Te, N, J, $($generic),+> ::core::ops::Mul<Unit<L, M, Ti, I, Te, N, J>> for $type<$($generic),+> {
+            type Output = $crate::Quantity<Unit<L, M, Ti, I, Te, N, J>, $type<$($generic),+>>;
+
+            fn mul(self, _: Unit<L, M, Ti, I, Te, N, J>) -> Self::Output {
+                Self::Output::new(self)
+            }
+        }
+
+        // 10 / km = 10 * km^(-1)
+        //#[cfg(feature = $feat)]
+        impl<L, M, Ti, I, Te, N, J, $($generic),+> ::core::ops::Div<Unit<L, M, Ti, I, Te, N, J>> for $type<$($generic),+>
+        where
+            L: UnitInv,
+            M: UnitInv,
+            Ti: UnitInv,
+            I: UnitInv,
+            Te: UnitInv,
+            N: UnitInv,
+            J: UnitInv,
+        {
+            type Output =
+                $crate::Quantity<$crate::ops::Inverse<Unit<L, M, Ti, I, Te, N, J>>, $type<$($generic),+>>;
+
+            fn div(self, _: Unit<L, M, Ti, I, Te, N, J>) -> Self::Output {
+                Self::Output::new(self)
+            }
+        }
+    };
 }
 
 impl_mul_div_for_value_by_unit!(f32, "f32");
@@ -300,3 +332,22 @@ impl_mul_div_for_value_by_unit!(i64, "i64");
 impl_mul_div_for_value_by_unit!(u64, "u64");
 impl_mul_div_for_value_by_unit!(i128, "i128");
 impl_mul_div_for_value_by_unit!(u128, "u128");
+impl_mul_div_for_value_by_unit!(RowVector3<T>, "vector3");
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        consts::{m, s},
+        unit::MeterPerSecond,
+    };
+    use crate::Quantity;
+    use nalgebra::{RowVector3, Vector3};
+
+    #[test]
+    fn nalgebra_vec() {
+        let v1 = RowVector3::new(1.0_f32, 2.0_f32, -1.0_f32) * (m / s);
+        let v2 = RowVector3::new(-1.0_f32, -2.0_f32, 1.0_f32) * (m / s);
+        println!("{}\n{}\n{}", v1.clone(), v2.clone(), v1 + v2);
+        println!("{}", RowVector3::<f32>::default())
+    }
+}

@@ -13,6 +13,14 @@ pub struct Quantity<U, V> {
     phantom: PhantomData<U>,
 }
 
+impl<U, V: Clone> Clone for Quantity<U, V> {
+    fn clone(&self) -> Self {
+        Self::new(self.value.clone())
+    }
+}
+
+impl<U, V: Copy> Copy for Quantity<U, V> {}
+
 impl<U: Debug + ConstDefault, V: Debug> Debug for Quantity<U, V> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{:?} {:?}", self.value, U::DEFAULT)

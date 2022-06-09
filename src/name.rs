@@ -1,3 +1,5 @@
+use nalgebra::{ArrayStorage, Const, RowVector, RowVector3};
+
 /// Short & full names
 pub trait Name {
     /// Short name
