@@ -1,10 +1,10 @@
 [package]
-name = "uom_ng"
+name = "typed_units"
 version = "0.1.0"
 edition = "2021"
 
 [lib]
-name = "uom_ng"
+name = "typed_units"
 
 [dependencies]
 const-default = { version = "1.0.0", default-features = false }
