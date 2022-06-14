@@ -2,13 +2,15 @@
 pub mod frac;
 
 use crate::util::{binary_ops_out_aliases, trait_alias};
+use const_default::ConstDefault;
 use core::{
     marker::PhantomData,
     ops::{Add, Div, Mul, Sub},
 };
+use std::ops::Neg;
 use typenum::{
-    op, Abs, Diff, Gcd, Gcf, Integer, NInt, NonZero, PInt, Prod, Quot, Sum, Unsigned, N1, N2, N3,
-    N4, N5, N6, N7, N8, P1, P2, P3, P4, P5, P6, P7, P8, Z0,
+    op, Abs, Diff, Gcd, Gcf, Integer, NInt, Negate, NonZero, PInt, Prod, Quot, Sum, Unsigned, N1,
+    N2, N3, N4, N5, N6, N7, N8, P1, P2, P3, P4, P5, P6, P7, P8, Z0,
 };
 
 trait_alias!((Unsigned, NonZero) -> Positive);
@@ -77,15 +79,42 @@ num_to_typenum_and_back! {
     8 <-> P8,
 }
 
-impl<const L: i8, const R: i8> Add<Num<R>> for Num<L>
-where
-    Num<L>: ToTypenum,
-    Num<R>: ToTypenum,
-    Sum<Typenum<Num<L>>, Typenum<Num<R>>>::
-{
-    type Output = Const<Sum<Typenum<Num<L>>, Typenum<Num<R>>>>;
+macro_rules! impl_binary_ops_for_num {
+    ($(($op:ident, $fun:ident, $out:ident),)+) => {
+        $(impl<const L: i8, const R: i8> $op<Num<R>> for Num<L>
+        where
+            Num<L>: ToTypenum,
+            Num<R>: ToTypenum,
+            Typenum<Num<L>>: $op<Typenum<Num<R>>>,
+            $out<Typenum<Num<L>>, Typenum<Num<R>>>: ToConst,
+            Const<$out<Typenum<Num<L>>, Typenum<Num<R>>>>: ConstDefault,
+        {
+            type Output = Const<$out<Typenum<Num<L>>, Typenum<Num<R>>>>;
 
-    fn add(self, rhs: Num<R>) -> Self::Output {
-        todo!()
+            fn $fun(self, _: Num<R>) -> Self::Output {
+                Self::Output::DEFAULT
+            }
+        })+
+    };
+}
+
+impl_binary_ops_for_num! {
+    (Add, add, Sum),
+    (Sub, sub, Diff),
+    (Mul, mul, Prod),
+    (Div, div, Quot),
+}
+
+impl<const N: i8> Neg for Num<N>
+where
+    Num<N>: ToTypenum,
+    Typenum<Num<N>>: Neg,
+    Negate<Typenum<Num<N>>>: ToConst,
+    Const<Negate<Typenum<Num<N>>>>: ConstDefault,
+{
+    type Output = Const<Negate<Typenum<Num<N>>>>;
+
+    fn neg(self) -> Self::Output {
+        Self::Output::DEFAULT
     }
 }

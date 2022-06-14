@@ -125,10 +125,7 @@ impl Neg for ExpUnit {
     type Output = ExpUnit;
 
     fn neg(self) -> Self::Output {
-        ExpUnit {
-            exp: -self.exp,
-            ..self
-        }
+        ExpUnit { exp: -self.exp, ..self }
     }
 }
 
@@ -143,15 +140,7 @@ impl Display for ExpUnit {
 }
 
 fn fmt_product_of_units(f: &mut Formatter<'_>, units: &[ExpUnit], sign: bool) -> fmt::Result {
-    write!(
-        f,
-        "{}",
-        if sign {
-            units[0].clone()
-        } else {
-            -units[0].clone()
-        }
-    )?;
+    write!(f, "{}", if sign { units[0].clone() } else { -units[0].clone() })?;
     for unit in &units[1..] {
         write!(f, "⋅{}", if sign { unit.clone() } else { -unit.clone() })?;
     }

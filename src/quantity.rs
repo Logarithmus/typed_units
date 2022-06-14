@@ -50,10 +50,7 @@ impl<U, V: Ord> Ord for Quantity<U, V> {
 impl<U, V> Quantity<U, V> {
     #[must_use]
     pub const fn new(value: V) -> Self {
-        Self {
-            value,
-            phantom: PhantomData,
-        }
+        Self { value, phantom: PhantomData }
     }
 
     pub fn from<Uother>(other: Quantity<Uother, V>) -> Self
@@ -124,14 +121,8 @@ mod tests {
         let density = 1000_i32 * (kg / (m * m * m));
         let destiny = 1000_i32 * (kg / (m * m * m) / kg);
         let destiny2 = 1000_i32 * (kg / (m * m * m) / s / s);
-        println!(
-            "{}\n{}\n{}\n{}\n{}\n{}",
-            v1, v2, volume, density, destiny, destiny2
-        );
-        println!(
-            "{:?}\n{:?}\n{:?}\n{:?}\n{:?}\n{:?}",
-            v1, v2, volume, density, destiny, destiny2
-        );
+        println!("{}\n{}\n{}\n{}\n{}\n{}", v1, v2, volume, density, destiny, destiny2);
+        println!("{:?}\n{:?}\n{:?}\n{:?}\n{:?}\n{:?}", v1, v2, volume, density, destiny, destiny2);
         assert_eq!(v1 + v2, 13_f32 * (m / s));
     }
 
