@@ -1,28 +1,8 @@
 //! This module should be upstreamed to <https://lib.rs/typenum>
 
-use crate::{
-    typenum::{Lcm, LcmOp},
-    util::binary_ops_out_aliases,
-};
+use crate::typenum::{Lcm, LcmOp};
 use core::ops::{Add, Div, Mul};
 use typenum::{Prod, Quot, Sum};
-
-/// Operator to add 2 fractions of type-level numbers
-///
-/// We can't use `core::ops::Add` because both `core::ops::Add` & `(N, D)` are foreign to our crate.
-///
-/// We could wrap `(N, D)` into newtype struct like `struct Frac(N, D)`, but it would make
-/// `uom-ng` compile errors more verbose.
-//
-// We have to add prefix `Frac` as `core::ops::Add` is imported
-#[allow(clippy::module_name_repetitions)]
-pub trait FracAdd<Rhs> {
-    type Output;
-}
-
-binary_ops_out_aliases! {
-    FracAdd -> FracSum,
-}
 
 /// **TLDR;** `Sum<(Nl, Dl), (Nr, Dr)> == (Nl / Dl) + (Nr / Dr)`
 ///
@@ -30,7 +10,7 @@ binary_ops_out_aliases! {
 /// * `D` -- denominator
 /// * `l` -- left-hand side
 /// * `r` -- right-hand-side
-impl<Nl, Nr, Dl: Mul<Dr> + LcmOp<Dr>, Dr> FracAdd<(Nr, Dr)> for (Nl, Dl)
+impl<Nl, Nr, Dl: Mul<Dr> + LcmOp<Dr>, Dr> crate::ops::Add<(Nr, Dr)> for (Nl, Dl)
 where
     Lcm<Dl, Dr>: Div<Dl> + Div<Dr>,
     Nl: Mul<Quot<Lcm<Dl, Dr>, Dl>>,
