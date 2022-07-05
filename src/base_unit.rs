@@ -1,6 +1,6 @@
 use crate::{
     ops::{Div as UnitDiv, Inv, Mul as UnitMul},
-    typenum::Positive,
+    typenum::{Num, Positive, ToTypenum},
     Name, Root,
 };
 use core::{
@@ -15,19 +15,19 @@ use typenum::{
 /// Prefixed unit
 pub struct Pre<P, R>(PhantomData<(P, R)>);
 
-pub trait Exp {
+pub trait Exponent {
     const EXP: i32;
 }
 
-impl<R: Root> Exp for R {
+impl<R: Root> Exponent for R {
     const EXP: i32 = 1;
 }
 
-impl<P, R: Root> Exp for Pre<P, R> {
+impl<P, R: Root> Exponent for Pre<P, R> {
     const EXP: i32 = 1;
 }
 
-impl<U, E: Integer> Exp for (U, E) {
+impl<U, E: Integer> Exponent for (U, E) {
     const EXP: i32 = E::I32;
 }
 
@@ -62,93 +62,12 @@ impl<U: crate::name::Debug, E> crate::name::Debug for (U, E) {
     }
 }
 
-/// Implements operators (`Mul` & `Div`) for `(U, E)`,
-/// where `U` -- base unit with or without prefix, `E` -- exponent
-macro_rules! impl_ops_for_exp_unit_0 {
-    ($($op:ident: $out:ident,)+) => {
-        $(impl<Ul: BaseUnit, Ur: BaseUnit> $op<(Ur, Z0)> for (Ul, Z0) {
-            type Output = (Ul, Z0);
-        }
-
-        impl<Ul: BaseUnit, Ur: BaseUnit, El: Positive> $op<(Ur, Z0)> for (Ul, PInt<El>) {
-            type Output = Self;
-        }
-
-        impl<Ul: BaseUnit, Ur: BaseUnit, El: Positive> $op<(Ur, Z0)> for (Ul, NInt<El>) {
-            type Output = Self;
-        }
-
-        impl<Ul, Ur, Er: Positive> $op<(Ur, PInt<Er>)> for (Ul, Z0) {
-            type Output = (Ur, $out<Z0, PInt<Er>>);
-        }
-
-        impl<Ul: BaseUnit, Ur: BaseUnit, Er: Positive> $op<(Ur, NInt<Er>)> for (Ul, Z0) {
-            type Output = (Ur, $out<Z0, NInt<Er>>);
-        })+
-    };
+impl<U: BaseUnit, El: Add<Er>, Er> UnitMul<(U, Er)> for (U, El) {
+    type Output = (U, Sum<El, Er>);
 }
 
-impl_ops_for_exp_unit_0! {
-    UnitMul: Sum,
-    UnitDiv: Diff,
-}
-
-impl<U: BaseUnit, El: Add<Er> + Positive, Er: Positive> UnitMul<(U, PInt<Er>)> for (U, PInt<El>)
-where
-    Sum<El, Er>: Positive,
-{
-    type Output = (U, PInt<Sum<El, Er>>);
-}
-
-impl<U: BaseUnit, El: Sub<Er> + Positive, Er: Positive> UnitDiv<(U, PInt<Er>)> for (U, PInt<El>)
-where
-    El: Cmp<Er> + PrivateIntegerAdd<Compare<El, Er>, Er>,
-{
-    type Output = (U, Diff<PInt<El>, PInt<Er>>);
-}
-
-impl<U: BaseUnit, El: Add<Er> + Positive, Er> UnitMul<(U, PInt<Er>)> for (U, NInt<El>)
-where
-    Er: Positive + Cmp<El> + PrivateIntegerAdd<Compare<Er, El>, El>,
-{
-    type Output = (U, Sum<NInt<El>, PInt<Er>>);
-}
-
-impl<U: BaseUnit, El: Add<Er> + Positive, Er: Positive> UnitDiv<(U, PInt<Er>)> for (U, NInt<El>)
-where
-    Sum<El, Er>: Positive,
-{
-    type Output = (U, NInt<Sum<El, Er>>);
-}
-
-impl<U, El, Er> UnitMul<(U, NInt<Er>)> for (U, PInt<El>)
-where
-    U: BaseUnit,
-    El: Add<Er> + Positive + Cmp<Er> + PrivateIntegerAdd<Compare<El, Er>, Er>,
-    Er: Positive,
-{
-    type Output = (U, Sum<PInt<El>, NInt<Er>>);
-}
-
-impl<U: BaseUnit, El: Add<Er> + Positive, Er: Positive> UnitDiv<(U, NInt<Er>)> for (U, PInt<El>)
-where
-    Sum<El, Er>: Positive,
-{
-    type Output = (U, PInt<Sum<El, Er>>);
-}
-
-impl<U: BaseUnit, El: Add<Er> + Positive, Er: Positive> UnitMul<(U, NInt<Er>)> for (U, NInt<El>)
-where
-    Sum<El, Er>: Positive,
-{
-    type Output = (U, Sum<NInt<El>, NInt<Er>>);
-}
-
-impl<U: BaseUnit, El: Add<Er> + Positive, Er: Positive> UnitDiv<(U, NInt<Er>)> for (U, NInt<El>)
-where
-    Sum<El, Er>: Positive,
-{
-    type Output = (U, NInt<Sum<El, Er>>);
+impl<U: BaseUnit, El: Sub<Er>, Er> UnitDiv<(U, Er)> for (U, El) {
+    type Output = (U, Diff<El, Er>);
 }
 
 impl<U, E: Neg> Inv for (U, E) {

@@ -1,5 +1,5 @@
 use crate::{
-    base_unit::Exp,
+    base_unit::Exponent,
     name::superscript,
     ops::{Div as UnitDiv, Inv as UnitInv, Mul as UnitMul},
     util::{impl_binary_op_for_type_array, impl_unary_op_for_type_array, type_array},
@@ -11,7 +11,7 @@ use core::{
     marker::PhantomData,
     ops::{Div, Mul},
 };
-use nalgebra::{RowVector3, Vector3};
+use nalgebra::RowVector3;
 use std::ops::Neg;
 
 /// Metric prefixes
@@ -149,7 +149,7 @@ fn fmt_product_of_units(f: &mut Formatter<'_>, units: &[ExpUnit], sign: bool) ->
 
 macro_rules! impl_trait_for_unit {
     ($unit:ident<$($base_unit:ident),+>, $trait:ident, $fun:ident) => {
-        impl<$($base_unit: crate::name::$trait + Exp),+> $trait for $unit<$($base_unit),+> {
+        impl<$($base_unit: crate::name::$trait + Exponent),+> $trait for $unit<$($base_unit),+> {
             fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
                 let (numerator, denominator): (Vec<_>, Vec<_>) = [
                     $(ExpUnit::new($base_unit::$fun(), $base_unit::EXP)),+
