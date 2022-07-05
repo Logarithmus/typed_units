@@ -201,27 +201,26 @@ pub mod unit {
         root::{cd, g, m, mol, s, A, K},
         Unit,
     };
-    use crate::base_unit::Pre;
-    use typenum::{N1, P1, P2, Z0};
+    use crate::{base_unit::Pre, typenum::Num};
 
     macro_rules! unit_aliases {
-        ($(($m:ident, $kg:ident, $s:ident, $A:ident, $K:ident, $mol:ident, $cd:ident) -> $alias:ident,)+) => {
+        ($(($m:literal, $kg:literal, $s:literal, $A:literal, $K:literal, $mol:literal, $cd:literal) -> $alias:ident,)+) => {
             $(pub type $alias =
-                Unit<(m, $m), (Pre<k, g>, $kg), (s, $s), (A, $A), (K, $K), (mol, $mol), (cd, $cd)>;)+
+                Unit<(m, Num<$m>), (Pre<k, g>, Num<$kg>), (s, Num<$s>), (A, Num<$A>), (K, Num<$K>), (mol, Num<$mol>), (cd, Num<$cd>)>;)+
         };
     }
 
     unit_aliases! {
-        (Z0, Z0, Z0, Z0, Z0, Z0, Z0) -> Dimensionless,
-        (P1, Z0, Z0, Z0, Z0, Z0, Z0) -> Meter,
-        (Z0, P1, Z0, Z0, Z0, Z0, Z0) -> Kilogram,
-        (Z0, Z0, P1, Z0, Z0, Z0, Z0) -> Second,
-        (Z0, Z0, Z0, P1, Z0, Z0, Z0) -> Ampere,
-        (Z0, Z0, Z0, Z0, P1, Z0, Z0) -> Kelvin,
-        (Z0, Z0, Z0, Z0, Z0, P1, Z0) -> Mole,
-        (Z0, Z0, Z0, Z0, Z0, Z0, P1) -> Candela,
-        (P1, Z0, N1, Z0, Z0, Z0, Z0) -> MeterPerSecond,
-        (P2, Z0, Z0, Z0, Z0, Z0, Z0) -> MeterSquared,
+        (0, 0, 0, 0, 0, 0, 0) -> Dimensionless,
+        (1, 0, 0, 0, 0, 0, 0) -> Meter,
+        (0, 1, 0, 0, 0, 0, 0) -> Kilogram,
+        (0, 0, 1, 0, 0, 0, 0) -> Second,
+        (0, 0, 0, 1, 0, 0, 0) -> Ampere,
+        (0, 0, 0, 0, 1, 0, 0) -> Kelvin,
+        (0, 0, 0, 0, 0, 1, 0) -> Mole,
+        (0, 0, 0, 0, 0, 0, 1) -> Candela,
+        (1, 0,-1, 0, 0, 0, 0) -> MeterPerSecond,
+        (2, 0, 0, 0, 0, 0, 0) -> MeterSquared,
     }
 }
 

@@ -3,14 +3,11 @@ pub mod frac;
 
 use crate::util::{binary_ops_out_aliases, trait_alias};
 use const_default::ConstDefault;
-use core::{
-    marker::PhantomData,
-    ops::{Add, Div, Mul, Sub},
-};
+use core::ops::{Add, Div, Mul, Sub};
 use std::ops::Neg;
 use typenum::{
-    op, Abs, Diff, Gcd, Gcf, Integer, NInt, Negate, NonZero, PInt, Prod, Quot, Sum, Unsigned, N1,
-    N2, N3, N4, N5, N6, N7, N8, P1, P2, P3, P4, P5, P6, P7, P8, Z0,
+    op, Abs, Diff, Gcd, Gcf, Integer, Negate, NonZero, Prod, Quot, Sum, Unsigned, N1, N2, N3, N4,
+    N5, N6, N7, N8, P1, P2, P3, P4, P5, P6, P7, P8, Z0,
 };
 
 trait_alias!((Unsigned, NonZero) -> Positive);
