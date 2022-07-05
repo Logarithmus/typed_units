@@ -1,6 +1,5 @@
 use crate::{
     ops::{Div as UnitDiv, Inv, Mul as UnitMul},
-    typenum::{Num, Positive, ToTypenum},
     Name, Root,
 };
 use core::{
@@ -9,7 +8,7 @@ use core::{
     ops::{Add, Neg, Sub},
 };
 use typenum::{
-    private::PrivateIntegerAdd, Cmp, Compare, Diff, Integer, NInt, Negate, PInt, Sum, Z0,
+    Diff, Integer, Negate, Sum,
 };
 
 /// Prefixed unit
