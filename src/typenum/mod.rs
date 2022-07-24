@@ -1,6 +1,7 @@
 //! This module should be upstreamed to <https://lib.rs/typenum>
 pub mod frac;
 
+use crate::base_unit::Exponent;
 use crate::util::{binary_ops_out_aliases, trait_alias};
 use const_default::ConstDefault;
 use core::ops::{Add, Div, Mul, Sub};
@@ -39,19 +40,27 @@ pub trait ToConst {
     type Const;
 }
 
-pub type Const<T> = <T as ToConst>::Const;
+pub type Constant<T> = <T as ToConst>::Const;
 
 #[derive(Clone, Copy)]
-pub struct Num<const N: i8>;
+pub struct C<const N: i32>;
+
+impl<const N: i32> ConstDefault for C<N> {
+    const DEFAULT: Self = Self;
+}
 
 macro_rules! num_to_typenum_and_back {
     ($($const:literal <-> $typenum:ident,)+) => {
-        $(impl ToTypenum for Num<$const> {
+        $(impl ToTypenum for C<$const> {
             type Typenum = $typenum;
         }
 
         impl ToConst for $typenum {
-            type Const = Num<$const>;
+            type Const = C<$const>;
+        }
+
+        impl<U> Exponent for (U, C<$const>) {
+            const EXP: i32 = $const;
         })+
     };
 }
@@ -78,17 +87,17 @@ num_to_typenum_and_back! {
 
 macro_rules! impl_binary_ops_for_num {
     ($(($op:ident, $fun:ident, $out:ident),)+) => {
-        $(impl<const L: i8, const R: i8> $op<Num<R>> for Num<L>
+        $(impl<const L: i32, const R: i32> $op<C<R>> for C<L>
         where
-            Num<L>: ToTypenum,
-            Num<R>: ToTypenum,
-            Typenum<Num<L>>: $op<Typenum<Num<R>>>,
-            $out<Typenum<Num<L>>, Typenum<Num<R>>>: ToConst,
-            Const<$out<Typenum<Num<L>>, Typenum<Num<R>>>>: ConstDefault,
+            C<L>: ToTypenum,
+            C<R>: ToTypenum,
+            Typenum<C<L>>: $op<Typenum<C<R>>>,
+            $out<Typenum<C<L>>, Typenum<C<R>>>: ToConst,
+            Constant<$out<Typenum<C<L>>, Typenum<C<R>>>>: ConstDefault,
         {
-            type Output = Const<$out<Typenum<Num<L>>, Typenum<Num<R>>>>;
+            type Output = Constant<$out<Typenum<C<L>>, Typenum<C<R>>>>;
 
-            fn $fun(self, _: Num<R>) -> Self::Output {
+            fn $fun(self, _: C<R>) -> Self::Output {
                 Self::Output::DEFAULT
             }
         })+
@@ -102,14 +111,14 @@ impl_binary_ops_for_num! {
     (Div, div, Quot),
 }
 
-impl<const N: i8> Neg for Num<N>
+impl<const N: i32> Neg for C<N>
 where
-    Num<N>: ToTypenum,
-    Typenum<Num<N>>: Neg,
-    Negate<Typenum<Num<N>>>: ToConst,
-    Const<Negate<Typenum<Num<N>>>>: ConstDefault,
+    C<N>: ToTypenum,
+    Typenum<C<N>>: Neg,
+    Negate<Typenum<C<N>>>: ToConst,
+    Constant<Negate<Typenum<C<N>>>>: ConstDefault,
 {
-    type Output = Const<Negate<Typenum<Num<N>>>>;
+    type Output = Constant<Negate<Typenum<C<N>>>>;
 
     fn neg(self) -> Self::Output {
         Self::Output::DEFAULT

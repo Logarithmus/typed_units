@@ -11,7 +11,6 @@ use core::{
     marker::PhantomData,
     ops::{Div, Mul},
 };
-use nalgebra::RowVector3;
 use std::ops::Neg;
 
 /// Metric prefixes
@@ -57,7 +56,7 @@ pub mod root {
     #[rustfmt::skip]
     roots_with_alias! {
         (meter,      "meter",             m,    "m"),
-        (AstroUnit,  "astronomical unit", au,   "AU"),
+        (AstroUnit,  "astronomical unit", AU,   "AU"),
         (gram,       "gram",              g,    "g"),
         (second,     "second",            s,    "s"),
         (ampere,     "Ampere",            A,    "A"),
@@ -197,42 +196,49 @@ impl_trait_for_unit!(Unit<L, M, Ti, I, Te, N, J>, Debug, debug);
 
 pub mod unit {
     use super::{
-        prefix::k,
-        root::{cd, g, m, mol, s, A, K},
+        prefix::{k, kilo},
+        root::{cd, g, gram, m, meter, mol, s, second, A, K},
         Unit,
     };
-    use crate::{base_unit::Pre, typenum::Num};
+    use crate::{base_unit::Pre, typenum::C};
 
     macro_rules! unit_aliases {
         ($(($m:literal, $kg:literal, $s:literal, $A:literal, $K:literal, $mol:literal, $cd:literal) -> $alias:ident,)+) => {
             $(pub type $alias =
-                Unit<(m, Num<$m>), (Pre<k, g>, Num<$kg>), (s, Num<$s>), (A, Num<$A>), (K, Num<$K>), (mol, Num<$mol>), (cd, Num<$cd>)>;)+
+                Unit<(m, C<$m>), (Pre<k, g>, C<$kg>), (s, C<$s>), (A, C<$A>), (K, C<$K>), (mol, C<$mol>), (cd, C<$cd>)>;)+
         };
     }
 
     unit_aliases! {
         (0, 0, 0, 0, 0, 0, 0) -> Dimensionless,
-        (1, 0, 0, 0, 0, 0, 0) -> Meter,
-        (0, 1, 0, 0, 0, 0, 0) -> Kilogram,
-        (0, 0, 1, 0, 0, 0, 0) -> Second,
+        //(1, 0, 0, 0, 0, 0, 0) -> Meter,
+        //(0, 1, 0, 0, 0, 0, 0) -> Kilogram,
+        //(0, 0, 1, 0, 0, 0, 0) -> Second,
         (0, 0, 0, 1, 0, 0, 0) -> Ampere,
         (0, 0, 0, 0, 1, 0, 0) -> Kelvin,
         (0, 0, 0, 0, 0, 1, 0) -> Mole,
         (0, 0, 0, 0, 0, 0, 1) -> Candela,
         (1, 0,-1, 0, 0, 0, 0) -> MeterPerSecond,
-        (2, 0, 0, 0, 0, 0, 0) -> MeterSquared,
+        //(2, 0, 0, 0, 0, 0, 0) -> MeterSquared,
     }
+    pub type Meter = Unit<(meter, C<1>)>;
+    pub type Kilometer = Unit<(Pre<kilo, meter>, C<1>)>;
+    pub type MeterSquared = Unit<(meter, C<2>)>;
+    pub type Second = Unit<(), (), (second, C<1>)>;
+    pub type Kilogram = Unit<(), (Pre<kilo, gram>, C<1>)>;
 }
 
 #[allow(non_upper_case_globals)]
 pub mod consts {
     use super::{
-        unit::{Ampere, Candela, Kelvin, Kilogram, Meter, Mole, Second},
+        unit::{Ampere, Candela, Kelvin, Kilogram, Kilometer, Meter, MeterSquared, Mole, Second},
         Unit,
     };
     use const_default::ConstDefault;
 
     pub const m: Meter = Unit::DEFAULT;
+    pub const km: Kilometer = Unit::DEFAULT;
+    pub const m2: MeterSquared = Unit::DEFAULT;
     pub const kg: Kilogram = Unit::DEFAULT;
     pub const s: Second = Unit::DEFAULT;
     pub const A: Ampere = Unit::DEFAULT;
@@ -310,7 +316,7 @@ macro_rules! impl_mul_div_for_value_by_unit {
 
 impl_mul_div_for_value_by_unit!(f32, "f32");
 impl_mul_div_for_value_by_unit!(f64, "f64");
-impl_mul_div_for_value_by_unit!(i8, "18");
+impl_mul_div_for_value_by_unit!(i8, "i8");
 impl_mul_div_for_value_by_unit!(u8, "u8");
 impl_mul_div_for_value_by_unit!(i16, "i16");
 impl_mul_div_for_value_by_unit!(u16, "u16");
@@ -320,21 +326,26 @@ impl_mul_div_for_value_by_unit!(i64, "i64");
 impl_mul_div_for_value_by_unit!(u64, "u64");
 impl_mul_div_for_value_by_unit!(i128, "i128");
 impl_mul_div_for_value_by_unit!(u128, "u128");
-impl_mul_div_for_value_by_unit!(RowVector3<T>, "vector3");
 
 #[cfg(test)]
 mod tests {
     use super::{
-        consts::{m, s},
+        consts::{m, m2, s},
         unit::MeterPerSecond,
     };
-    use crate::Quantity;
+    use crate::{
+        isq::{consts::kg, unit::Meter},
+        Quantity,
+    };
     use nalgebra::{RowVector3, Vector3};
 
     #[test]
     fn nalgebra_vec() {
-        let v1 = RowVector3::new(1.0_f32, 2.0_f32, -1.0_f32) * (m / s);
-        let v2 = RowVector3::new(-1.0_f32, -2.0_f32, 1.0_f32) * (m / s);
+        let l1 = 12_f32 * m;
+        let l2 = 1_f32 * m2;
+        let l3 = l1 + l2;
+        let v1 = Quantity::<Meter, _>::new(RowVector3::new(1, 2, -1));
+        let v2 = Quantity::<Meter, _>::new(RowVector3::new(-1, -2, 1));
         println!("{}\n{}\n{}", v1.clone(), v2.clone(), v1 + v2);
         println!("{}", RowVector3::<f32>::default())
     }

@@ -1,15 +1,13 @@
 use crate::{
     ops::{Div as UnitDiv, Inv, Mul as UnitMul},
-    Name, Root,
+    Name, Prefix, Root,
 };
 use core::{
     i32,
     marker::PhantomData,
     ops::{Add, Neg, Sub},
 };
-use typenum::{
-    Diff, Integer, Negate, Sum,
-};
+use typenum::{Diff, Negate, Sum};
 
 /// Prefixed unit
 pub struct Pre<P, R>(PhantomData<(P, R)>);
@@ -18,16 +16,16 @@ pub trait Exponent {
     const EXP: i32;
 }
 
+impl Exponent for () {
+    const EXP: i32 = 0;
+}
+
 impl<R: Root> Exponent for R {
     const EXP: i32 = 1;
 }
 
 impl<P, R: Root> Exponent for Pre<P, R> {
     const EXP: i32 = 1;
-}
-
-impl<U, E: Integer> Exponent for (U, E) {
-    const EXP: i32 = E::I32;
 }
 
 /// Base unit for system of units
@@ -71,6 +69,34 @@ impl<U: BaseUnit, El: Sub<Er>, Er> UnitDiv<(U, Er)> for (U, El) {
 
 impl<U, E: Neg> Inv for (U, E) {
     type Output = (U, Negate<E>);
+}
+
+impl UnitMul for () {
+    type Output = ();
+}
+
+impl UnitDiv for () {
+    type Output = ();
+}
+
+impl<U, E> UnitMul<(U, E)> for () {
+    type Output = (U, E);
+}
+
+impl<U, E> UnitMul<()> for (U, E) {
+    type Output = (U, E);
+}
+
+impl<U, E> UnitDiv<()> for (U, E) {
+    type Output = (U, E);
+}
+
+impl<U, E: Neg> UnitDiv<(U, E)> for () {
+    type Output = (U, Negate<E>);
+}
+
+impl Inv for () {
+    type Output = ();
 }
 
 pub trait ConvertFrom<U, V> {

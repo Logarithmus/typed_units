@@ -1,5 +1,3 @@
-
-
 /// Short & full names
 pub trait Name {
     /// Short name
@@ -10,6 +8,12 @@ pub trait Name {
 
 pub trait Display {
     fn display() -> String;
+}
+
+impl Display for () {
+    fn display() -> String {
+        String::new()
+    }
 }
 
 impl<N: Name> Display for N {

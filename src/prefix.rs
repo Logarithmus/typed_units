@@ -33,7 +33,7 @@ macro_rules! prefixes {
         }
 
         // #[cfg(feature = $full_str)]
-        // crate::prefix::impl_prefix!($full, $base, $exp, i8);
+        // crate::prefix::impl_prefix!($full, $base, $exp, i32);
         // crate::prefix::impl_prefix!($full, $base, $exp, u8);
         crate::prefix::impl_prefix!($full, $base, $exp, i16);
         // crate::prefix::impl_prefix!($full, $base, $exp, u16);

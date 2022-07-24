@@ -10,7 +10,7 @@ macro_rules! reexport_core_ops {
             "`", $sign, "` operator, used when `std::ops::", stringify!($op),
             "` can't be used due to orphan rules"
         )]
-        pub trait $op<Rhs> {
+        pub trait $op<Rhs = Self> {
             type Output;
         })+
     };

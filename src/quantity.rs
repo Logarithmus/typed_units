@@ -112,38 +112,39 @@ impl<U: Display + ConstDefault, V: Display> Display for Quantity<U, V> {
 #[cfg(test)]
 mod tests {
     use crate::isq::consts::*;
+    use crate::typenum::C;
 
-    #[test]
-    fn add_quantity_to_quantity() {
-        let v1 = 10_f32 * (m / s);
-        let v2 = 3_f32 * (m / s);
-        let volume = 100_i32 * (m * m * m);
-        let density = 1000_i32 * (kg / (m * m * m));
-        let destiny = 1000_i32 * (kg / (m * m * m) / kg);
-        let destiny2 = 1000_i32 * (kg / (m * m * m) / s / s);
-        println!("{}\n{}\n{}\n{}\n{}\n{}", v1, v2, volume, density, destiny, destiny2);
-        println!("{:?}\n{:?}\n{:?}\n{:?}\n{:?}\n{:?}", v1, v2, volume, density, destiny, destiny2);
-        assert_eq!(v1 + v2, 13_f32 * (m / s));
-    }
+    // #[test]
+    // fn add_quantity_to_quantity() {
+    //     let v1 = 10_f32 * (m / s);
+    //     let v2 = 3_f32 * (m / s);
+    //     let volume = 100_i32 * (m * m * m);
+    //     let density = 1000_i32 * (kg / (m * m * m));
+    //     let destiny = 1000_i32 * (kg / (m * m * m) / kg);
+    //     let destiny2 = 1000_i32 * (kg / (m * m * m) / s / s);
+    //     println!("{}\n{}\n{}\n{}\n{}\n{}", v1, v2, volume, density, destiny, destiny2);
+    //     println!("{:?}\n{:?}\n{:?}\n{:?}\n{:?}\n{:?}", v1, v2, volume, density, destiny, destiny2);
+    //     assert_eq!(v1 + v2, 13_f32 * (m / s));
+    // }
 
-    #[test]
-    fn sub_quantity_from_quantity() {
-        let v1 = 10_f32 * (m / s);
-        let v2 = 3_f32 * (m / s);
-        assert_eq!(v1 - v2, 7_f32 * (m / s));
-    }
+    // #[test]
+    // fn sub_quantity_from_quantity() {
+    //     let v1 = 10_f32 * (m / s);
+    //     let v2 = 3_f32 * (m / s);
+    //     assert_eq!(v1 - v2, 7_f32 * (m / s));
+    // }
 
-    #[test]
-    fn mul_quantity_by_quantity() {
-        let speed = 10_f32 * (m / s);
-        let time = 3_f32 * s;
-        assert_eq!(speed * time, 30_f32 * m);
-    }
+    // #[test]
+    // fn mul_quantity_by_quantity() {
+    //     let speed = 10_f32 * (m / s);
+    //     let time = 3_f32 * s;
+    //     assert_eq!(speed * time, 30_f32 * m);
+    // }
 
-    #[test]
-    fn div_quantity_by_quantity() {
-        let distance = 21_f32 * m;
-        let time = 3_f32 * s;
-        assert_eq!(distance / time, 7_f32 * (m / s));
-    }
+    // #[test]
+    // fn div_quantity_by_quantity() {
+    //     let distance = 21_f32 * m;
+    //     let time = 3_f32 * s;
+    //     assert_eq!(distance / time, 7_f32 * (m / s));
+    // }
 }
