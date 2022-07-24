@@ -10,4 +10,4 @@ pub mod root;
 pub mod typenum;
 pub mod util;
 
-pub use crate::{name::Name, prefix::Prefix, quantity::Quantity, root::Root, typenum::C};
+pub use crate::{name::Name, prefix::Prefix, quantity::Quantity, root::Root, typenum::Const};

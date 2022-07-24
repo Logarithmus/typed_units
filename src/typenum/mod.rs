@@ -43,23 +43,23 @@ pub trait ToConst {
 pub type Constant<T> = <T as ToConst>::Const;
 
 #[derive(Clone, Copy)]
-pub struct C<const N: i32>;
+pub struct Const<const N: i32>;
 
-impl<const N: i32> ConstDefault for C<N> {
+impl<const N: i32> ConstDefault for Const<N> {
     const DEFAULT: Self = Self;
 }
 
 macro_rules! num_to_typenum_and_back {
     ($($const:literal <-> $typenum:ident,)+) => {
-        $(impl ToTypenum for C<$const> {
+        $(impl ToTypenum for Const<$const> {
             type Typenum = $typenum;
         }
 
         impl ToConst for $typenum {
-            type Const = C<$const>;
+            type Const = Const<$const>;
         }
 
-        impl<U> Exponent for (U, C<$const>) {
+        impl<U> Exponent for (U, Const<$const>) {
             const EXP: i32 = $const;
         })+
     };
@@ -87,17 +87,17 @@ num_to_typenum_and_back! {
 
 macro_rules! impl_binary_ops_for_num {
     ($(($op:ident, $fun:ident, $out:ident),)+) => {
-        $(impl<const L: i32, const R: i32> $op<C<R>> for C<L>
+        $(impl<const L: i32, const R: i32> $op<Const<R>> for Const<L>
         where
-            C<L>: ToTypenum,
-            C<R>: ToTypenum,
-            Typenum<C<L>>: $op<Typenum<C<R>>>,
-            $out<Typenum<C<L>>, Typenum<C<R>>>: ToConst,
-            Constant<$out<Typenum<C<L>>, Typenum<C<R>>>>: ConstDefault,
+            Const<L>: ToTypenum,
+            Const<R>: ToTypenum,
+            Typenum<Const<L>>: $op<Typenum<Const<R>>>,
+            $out<Typenum<Const<L>>, Typenum<Const<R>>>: ToConst,
+            Constant<$out<Typenum<Const<L>>, Typenum<Const<R>>>>: ConstDefault,
         {
-            type Output = Constant<$out<Typenum<C<L>>, Typenum<C<R>>>>;
+            type Output = Constant<$out<Typenum<Const<L>>, Typenum<Const<R>>>>;
 
-            fn $fun(self, _: C<R>) -> Self::Output {
+            fn $fun(self, _: Const<R>) -> Self::Output {
                 Self::Output::DEFAULT
             }
         })+
@@ -111,14 +111,14 @@ impl_binary_ops_for_num! {
     (Div, div, Quot),
 }
 
-impl<const N: i32> Neg for C<N>
+impl<const N: i32> Neg for Const<N>
 where
-    C<N>: ToTypenum,
-    Typenum<C<N>>: Neg,
-    Negate<Typenum<C<N>>>: ToConst,
-    Constant<Negate<Typenum<C<N>>>>: ConstDefault,
+    Const<N>: ToTypenum,
+    Typenum<Const<N>>: Neg,
+    Negate<Typenum<Const<N>>>: ToConst,
+    Constant<Negate<Typenum<Const<N>>>>: ConstDefault,
 {
-    type Output = Constant<Negate<Typenum<C<N>>>>;
+    type Output = Constant<Negate<Typenum<Const<N>>>>;
 
     fn neg(self) -> Self::Output {
         Self::Output::DEFAULT

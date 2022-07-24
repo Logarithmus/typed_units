@@ -112,7 +112,7 @@ impl<U: Display + ConstDefault, V: Display> Display for Quantity<U, V> {
 #[cfg(test)]
 mod tests {
     use crate::isq::consts::*;
-    use crate::typenum::C;
+    use crate::typenum::Const;
 
     // #[test]
     // fn add_quantity_to_quantity() {

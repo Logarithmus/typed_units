@@ -200,44 +200,43 @@ pub mod unit {
         root::{cd, g, gram, m, meter, mol, s, second, A, K},
         Unit,
     };
-    use crate::{base_unit::Pre, typenum::C};
+    use crate::{base_unit::Pre, typenum::Const};
 
     macro_rules! unit_aliases {
         ($(($m:literal, $kg:literal, $s:literal, $A:literal, $K:literal, $mol:literal, $cd:literal) -> $alias:ident,)+) => {
             $(pub type $alias =
-                Unit<(m, C<$m>), (Pre<k, g>, C<$kg>), (s, C<$s>), (A, C<$A>), (K, C<$K>), (mol, C<$mol>), (cd, C<$cd>)>;)+
+                Unit<(m, Const<$m>), (Pre<k, g>, Const<$kg>), (s, Const<$s>), (A, Const<$A>), (K, Const<$K>), (mol, Const<$mol>), (cd, Const<$cd>)>;)+
         };
     }
 
     unit_aliases! {
         (0, 0, 0, 0, 0, 0, 0) -> Dimensionless,
-        //(1, 0, 0, 0, 0, 0, 0) -> Meter,
-        //(0, 1, 0, 0, 0, 0, 0) -> Kilogram,
-        //(0, 0, 1, 0, 0, 0, 0) -> Second,
+        (1, 0, 0, 0, 0, 0, 0) -> Meter,
+        (0, 1, 0, 0, 0, 0, 0) -> Kilogram,
+        (0, 0, 1, 0, 0, 0, 0) -> Second,
         (0, 0, 0, 1, 0, 0, 0) -> Ampere,
         (0, 0, 0, 0, 1, 0, 0) -> Kelvin,
         (0, 0, 0, 0, 0, 1, 0) -> Mole,
         (0, 0, 0, 0, 0, 0, 1) -> Candela,
         (1, 0,-1, 0, 0, 0, 0) -> MeterPerSecond,
-        //(2, 0, 0, 0, 0, 0, 0) -> MeterSquared,
+        (2, 0, 0, 0, 0, 0, 0) -> MeterSquared,
     }
-    pub type Meter = Unit<(meter, C<1>)>;
-    pub type Kilometer = Unit<(Pre<kilo, meter>, C<1>)>;
-    pub type MeterSquared = Unit<(meter, C<2>)>;
-    pub type Second = Unit<(), (), (second, C<1>)>;
-    pub type Kilogram = Unit<(), (Pre<kilo, gram>, C<1>)>;
+    // pub type Meter = Unit<(meter, Const<1>)>;
+    // pub type Kilometer = Unit<(Pre<kilo, meter>, Const<1>)>;
+    // pub type MeterSquared = Unit<(meter, Const<2>)>;
+    // pub type Second = Unit<(), (), (second, Const<1>)>;
+    // pub type Kilogram = Unit<(), (Pre<kilo, gram>, Const<1>)>;
 }
 
 #[allow(non_upper_case_globals)]
 pub mod consts {
     use super::{
-        unit::{Ampere, Candela, Kelvin, Kilogram, Kilometer, Meter, MeterSquared, Mole, Second},
+        unit::{Ampere, Candela, Kelvin, Kilogram, Meter, MeterSquared, Mole, Second},
         Unit,
     };
     use const_default::ConstDefault;
 
     pub const m: Meter = Unit::DEFAULT;
-    pub const km: Kilometer = Unit::DEFAULT;
     pub const m2: MeterSquared = Unit::DEFAULT;
     pub const kg: Kilogram = Unit::DEFAULT;
     pub const s: Second = Unit::DEFAULT;
@@ -342,7 +341,7 @@ mod tests {
     #[test]
     fn nalgebra_vec() {
         let l1 = 12_f32 * m;
-        let l2 = 1_f32 * m2;
+        let l2 = 1_f32 * (m / s);
         let l3 = l1 + l2;
         let v1 = Quantity::<Meter, _>::new(RowVector3::new(1, 2, -1));
         let v2 = Quantity::<Meter, _>::new(RowVector3::new(-1, -2, 1));
