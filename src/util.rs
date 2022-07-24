@@ -14,8 +14,8 @@ macro_rules! count_idents {
 pub(crate) use count_idents;
 
 macro_rules! type_array {
-    ($name:ident<$($param:ident),+>) => {
-        pub struct $name<$($param = ()),+>(::core::marker::PhantomData<($($param),+)>);
+    ($name:ident<$($param:ident = $default:ident),+>) => {
+        pub struct $name<$($param = ($default, crate::typenum::Const<0>)),+>(::core::marker::PhantomData<($($param),+)>);
 
         impl<$($param),+> $name<$($param),+> {
             const LEN: usize = $crate::util::count_idents!($($param),+);
@@ -103,17 +103,15 @@ macro_rules! trait_alias {
 
 pub(crate) use trait_alias;
 
+use crate::{
+    base_unit::Pre,
+    isq::{prefix::kilo, root::gram},
+};
+
 #[cfg(test)]
 mod tests {
     #[test]
     fn count_idents() {
         assert_eq!(count_idents!(A, B, C, D), 4);
-    }
-
-    #[test]
-    fn type_array_len() {
-        type_array!(Test<A, B, C, D, E, F>);
-        const LEN: usize = <Test>::len();
-        assert_eq!(LEN, 6);
     }
 }

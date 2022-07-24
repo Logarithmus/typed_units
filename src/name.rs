@@ -32,7 +32,7 @@ impl<N: Name> Debug for N {
     }
 }
 
-pub fn superscript(num: i32) -> String {
+pub fn superscript(num: i8) -> String {
     let s = num.to_string();
     s.bytes()
         .map(|c| match c {

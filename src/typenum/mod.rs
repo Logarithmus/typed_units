@@ -43,9 +43,9 @@ pub trait ToConst {
 pub type Constant<T> = <T as ToConst>::Const;
 
 #[derive(Clone, Copy)]
-pub struct Const<const N: i32>;
+pub struct Const<const N: i8>;
 
-impl<const N: i32> ConstDefault for Const<N> {
+impl<const N: i8> ConstDefault for Const<N> {
     const DEFAULT: Self = Self;
 }
 
@@ -60,7 +60,7 @@ macro_rules! num_to_typenum_and_back {
         }
 
         impl<U> Exponent for (U, Const<$const>) {
-            const EXP: i32 = $const;
+            const EXP: i8 = $const;
         })+
     };
 }
@@ -87,7 +87,7 @@ num_to_typenum_and_back! {
 
 macro_rules! impl_binary_ops_for_num {
     ($(($op:ident, $fun:ident, $out:ident),)+) => {
-        $(impl<const L: i32, const R: i32> $op<Const<R>> for Const<L>
+        $(impl<const L: i8, const R: i8> $op<Const<R>> for Const<L>
         where
             Const<L>: ToTypenum,
             Const<R>: ToTypenum,
@@ -111,7 +111,7 @@ impl_binary_ops_for_num! {
     (Div, div, Quot),
 }
 
-impl<const N: i32> Neg for Const<N>
+impl<const N: i8> Neg for Const<N>
 where
     Const<N>: ToTypenum,
     Typenum<Const<N>>: Neg,

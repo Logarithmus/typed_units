@@ -1,5 +1,5 @@
 use crate::{
-    base_unit::Exponent,
+    base_unit::{Exponent, Pre},
     name::superscript,
     ops::{Div as UnitDiv, Inv as UnitInv, Mul as UnitMul},
     util::{impl_binary_op_for_type_array, impl_unary_op_for_type_array, type_array},
@@ -12,6 +12,11 @@ use core::{
     ops::{Div, Mul},
 };
 use std::ops::Neg;
+
+use self::{
+    prefix::kilo,
+    root::{ampere, candela, gram, meter, mole, second, Kelvin},
+};
 
 /// Metric prefixes
 pub mod prefix {
@@ -99,7 +104,9 @@ pub mod root {
     impl<P, R: Root + kind::LuminousIntensity> kind::LuminousIntensity for Pre<P, R> {}
 }
 
-type_array!(Unit<L, M, Ti, I, Te, N, J>);
+type Kg = Pre<kilo, gram>;
+
+type_array!(Unit<L = meter, M = Kg, Ti = second, I = ampere, Te = Kelvin, N = mole, J = candela>);
 impl_binary_op_for_type_array!(Unit<L, M, Ti, I, Te, N, J>, Mul, UnitMul);
 impl_binary_op_for_type_array!(Unit<L, M, Ti, I, Te, N, J>, Div, UnitDiv);
 impl_unary_op_for_type_array!(Unit<L, M, Ti, I, Te, N, J>, UnitInv, UnitInv);
@@ -111,11 +118,11 @@ impl<L, M, Ti, I, Te, N, J> ConstDefault for Unit<L, M, Ti, I, Te, N, J> {
 #[derive(Clone, Debug)]
 struct ExpUnit {
     pub name: String,
-    pub exp: i32,
+    pub exp: i8,
 }
 
 impl ExpUnit {
-    fn new(name: String, exp: i32) -> Self {
+    fn new(name: String, exp: i8) -> Self {
         Self { name, exp }
     }
 }
@@ -131,7 +138,7 @@ impl Neg for ExpUnit {
 impl Display for ExpUnit {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.name)?;
-        if self.exp.abs() != 1 {
+        if self.exp != 1 {
             write!(f, "{}", superscript(self.exp))?;
         }
         Ok(())
@@ -200,7 +207,10 @@ pub mod unit {
         root::{cd, g, gram, m, meter, mol, s, second, A, K},
         Unit,
     };
-    use crate::{base_unit::Pre, typenum::Const};
+    use crate::{
+        base_unit::{Exp, Pre},
+        typenum::Const,
+    };
 
     macro_rules! unit_aliases {
         ($(($m:literal, $kg:literal, $s:literal, $A:literal, $K:literal, $mol:literal, $cd:literal) -> $alias:ident,)+) => {
@@ -211,9 +221,9 @@ pub mod unit {
 
     unit_aliases! {
         (0, 0, 0, 0, 0, 0, 0) -> Dimensionless,
-        (1, 0, 0, 0, 0, 0, 0) -> Meter,
+        // (1, 0, 0, 0, 0, 0, 0) -> Meter,
         (0, 1, 0, 0, 0, 0, 0) -> Kilogram,
-        (0, 0, 1, 0, 0, 0, 0) -> Second,
+        // (0, 0, 1, 0, 0, 0, 0) -> Second,
         (0, 0, 0, 1, 0, 0, 0) -> Ampere,
         (0, 0, 0, 0, 1, 0, 0) -> Kelvin,
         (0, 0, 0, 0, 0, 1, 0) -> Mole,
@@ -221,10 +231,10 @@ pub mod unit {
         (1, 0,-1, 0, 0, 0, 0) -> MeterPerSecond,
         (2, 0, 0, 0, 0, 0, 0) -> MeterSquared,
     }
-    // pub type Meter = Unit<(meter, Const<1>)>;
+    pub type Meter = Unit<(meter, Const<1>)>;
     // pub type Kilometer = Unit<(Pre<kilo, meter>, Const<1>)>;
     // pub type MeterSquared = Unit<(meter, Const<2>)>;
-    // pub type Second = Unit<(), (), (second, Const<1>)>;
+    pub type Second = Unit<(), (), (second, Const<1>)>;
     // pub type Kilogram = Unit<(), (Pre<kilo, gram>, Const<1>)>;
 }
 
@@ -336,16 +346,13 @@ mod tests {
         isq::{consts::kg, unit::Meter},
         Quantity,
     };
-    use nalgebra::{RowVector3, Vector3};
+    // use nalgebra::{RowVector3, Vector3};
 
     #[test]
     fn nalgebra_vec() {
         let l1 = 12_f32 * m;
-        let l2 = 1_f32 * (m / s);
+        let l2 = 1_f32 * m;
         let l3 = l1 + l2;
-        let v1 = Quantity::<Meter, _>::new(RowVector3::new(1, 2, -1));
-        let v2 = Quantity::<Meter, _>::new(RowVector3::new(-1, -2, 1));
-        println!("{}\n{}\n{}", v1.clone(), v2.clone(), v1 + v2);
-        println!("{}", RowVector3::<f32>::default())
+        println!("{l1}\n{l2}\n{l3}");
     }
 }
